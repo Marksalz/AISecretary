@@ -61,8 +61,7 @@ export const authController = {
     // Send back your own JWT (cookie-based or redirect)
     res.cookie("token", jwtToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      
     });
     res.redirect("http://localhost:5173/chat");
   },

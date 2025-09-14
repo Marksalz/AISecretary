@@ -47,6 +47,7 @@ const InputChat = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmedMessage }),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -99,7 +100,7 @@ const InputChat = () => {
 
   return (
     <div className="chat-container">
-      <h2>Assistant IA</h2>
+      <h2>Assistant AI</h2>
       
       <div className="chat-history">
         {chatHistory.map((msg, index) => (
