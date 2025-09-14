@@ -6,4 +6,5 @@ const authRouter = express.Router();
 authRouter.get("/google", authController.googleRedirect);
 authRouter.get("/google/callback", authController.googleCallback);
 
+
 export default authRouter;
