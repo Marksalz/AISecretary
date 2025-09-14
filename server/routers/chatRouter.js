@@ -1,15 +1,17 @@
-import express from "express";
-import ChatController from "../controllers/chatController.js";
-import { validateMessage, validate } from "../utils/validation.js";
+import express from 'express';
+import { handleChatMessage } from '../controllers/chatController.js';
 
-const chatRouter = express.Router();
+const router = express.Router();
 
-// Map POST /chat to the controller with validation
-chatRouter.post(
-  "/",
-  validateMessage,
-  validate,
-  ChatController.handleMessage
-);
+// POST /chat - Send a message
+router.post('/', (req, res) => {
+  if (!req.body || !req.body.message) {
+    return res.status(400).json({
+      success: false,
+      error: 'field messages is required'
+    });
+  }
+  handleChatMessage(req, res);
+});
 
-export default chatRouter;
+export default router;

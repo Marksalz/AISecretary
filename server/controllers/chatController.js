@@ -1,47 +1,84 @@
-import { chatService } from "../services/chatServices.js";
+import { askGemini } from '../services/chatServices.js';
 
-class ChatController {
-  /**
-   * Handle incoming chat messages
-   */
-  static async handleMessage(req, res) {
-    const { message } = req.body;
 
-    try {
-      const trimmedMessage = message.trim();
-      const lowerMessage = trimmedMessage.toLowerCase();
+async function extractEventDetails(message) {
+  const prompt = `Extract event details from this message in JSON format. Include these fields if mentioned:
+  - title (string): The event title
+  - start (ISO date string): Start time
+  - end (ISO date string): End time
+  - location (string): Event location
+  - description (string): Event description
 
-      // Route the message to the appropriate handler
-      if (lowerMessage.startsWith("add")) {
-        // Prepare the event data without adding to calendar
-        const eventData = await chatService.prepareEventData(trimmedMessage);
-        
-        return res.status(200).json({ 
-          success: true, 
-          data: { 
-            message: "Event data prepared successfully",
-            event: eventData
-          }
-        });
-        
-      } else {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid command. Please start your message with 'add' to create an event."
-        });
-      }
+  Message: "${message}"
+  
+  Example response for "Add team meeting tomorrow at 2pm for 1 hour":
+  {
+    "title": "Team Meeting",
+    "start": "2023-06-16T14:00:00+02:00",
+    "end": "2023-06-16T15:00:00+02:00"
+  }`;
 
-    } catch (error) {
-      console.error("Error in ChatController:", error);
-      
-      // Default error response
-      return res.status(500).json({
-        success: false,
-        error: error.message || "An unexpected error occurred. Please try again later.",
-        ...(process.env.NODE_ENV === 'development' && { details: error.stack })
-      });
-    }
+  try {
+    const response = await askGemini(prompt);
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Could not extract event details');
+    console.log(jsonMatch[0]);
+    
+    return JSON.parse(jsonMatch[0]);
+  } catch (error) {
+    console.error('Error extracting event details:', error);
+    throw new Error('Failed to extract event details');
   }
 }
 
-export default ChatController;
+
+async function handleChatMessage(req, res) {
+  try {
+    const { message } = req.body;
+    
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required and must be a string.'
+      });
+    }
+
+    const trimmedMessage = message.trim().toLowerCase();
+    
+    if (trimmedMessage.includes('add to calendar') || 
+        trimmedMessage.startsWith('add ') ) {
+      
+      const eventDetails = await extractEventDetails(trimmedMessage);
+      
+      return res.status(200).json({
+        success: true,
+        data: {
+          type: 'calendar_event',
+          message: 'I\'ll add this event to your calendar:',
+          event: eventDetails,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+    
+    const aiResponse = await askGemini(trimmedMessage);
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        type: 'message',
+        message: aiResponse,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error in handleChatMessage:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred while processing your message.'
+    });
+  }
+}
+
+export { handleChatMessage };

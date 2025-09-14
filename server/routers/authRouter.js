@@ -61,6 +61,9 @@ authRouter.get("/google/callback", async (req, res) => {
     googleRefreshToken: googleTokens.refresh_token, // save in DB for later refresh
   };
 
+  console.log("Payload:", payload);
+  
+
   const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
