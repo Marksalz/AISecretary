@@ -57,6 +57,7 @@ async function handleChatMessage(req, res) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(eventDetails),
+          credentials: "include",
         });
 
         const calendarResult = await response
