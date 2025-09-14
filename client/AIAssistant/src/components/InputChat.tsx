@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import "../styles.css/InputChat.css";
 export default function InputChat() {
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<
@@ -9,23 +9,20 @@ export default function InputChat() {
   const handleSend = async () => {
     if (!message.trim()) return;
 
-    // Add user message to history
     setChatHistory([...chatHistory, { sender: "user", text: message }]);
     setMessage("");
 
     try {
-      // Send message to server using fetch
       const res = await fetch("http://localhost:3000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
-
       const data = await res.json();
-      const botReply = data.response;
-
-      // Add bot response to history
-      setChatHistory((prev) => [...prev, { sender: "bot", text: botReply }]);
+      setChatHistory((prev) => [
+        ...prev,
+        { sender: "bot", text: data.response },
+      ]);
     } catch (err) {
       console.error(err);
       setChatHistory((prev) => [
@@ -40,41 +37,26 @@ export default function InputChat() {
   };
 
   return (
-    <div style={{ maxWidth: "500px", margin: "0 auto", padding: "1rem" }}>
+    <div className="chat-container">
       <h2>Chat</h2>
 
-      {/* Chat history */}
-      <div
-        style={{
-          border: "1px solid #ccc",
-          padding: "1rem",
-          minHeight: "200px",
-          marginBottom: "1rem",
-        }}
-      >
+      <div className="chat-history">
         {chatHistory.map((msg, index) => (
-          <div
-            key={index}
-            style={{ textAlign: msg.sender === "user" ? "right" : "left" }}
-          >
-            <strong>{msg.sender}:</strong> {msg.text}
+          <div key={index} className={`chat-message ${msg.sender}`}>
+            <span>{msg.text}</span>
           </div>
         ))}
       </div>
 
-      {/* Input + send button */}
-      <div style={{ display: "flex", gap: "0.5rem" }}>
+      <div className="chat-input">
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder="Type your message..."
-          style={{ flex: 1, padding: "0.5rem" }}
         />
-        <button onClick={handleSend} style={{ padding: "0.5rem 1rem" }}>
-          Send
-        </button>
+        <button onClick={handleSend}>Send</button>
       </div>
     </div>
   );
