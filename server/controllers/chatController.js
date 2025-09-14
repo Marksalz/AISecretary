@@ -49,15 +49,16 @@ async function handleChatMessage(req, res) {
     ) {
       const eventDetails = await extractEventDetails(trimmedMessage);
 
-      // Forward the extracted event to the events/create endpoint so it is added to user's Google Calendar
       try {
+        // Forward the cookie header from the incoming request
+        const cookieHeader = req.get("Cookie") || req.headers.cookie || "";
         const response = await fetch(`http://localhost:3000/events/create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Cookie: cookieHeader,
           },
           body: JSON.stringify(eventDetails),
-          credentials: "include",
         });
 
         const calendarResult = await response
