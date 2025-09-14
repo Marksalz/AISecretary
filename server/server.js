@@ -1,10 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import chatRoutes from "./routers/chat.js";
-
 import cookieParser from "cookie-parser";
-import router from "./routes/routes.js";
+import router from "./routes.js";
 
 dotenv.config();
 
@@ -16,7 +14,6 @@ app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
 
-
 // Routes
 app.use(router);
 
@@ -24,4 +21,3 @@ app.use(router);
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-app.listen(3000, () => console.log("Server running at http://localhost:3000"));
