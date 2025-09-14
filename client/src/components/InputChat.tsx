@@ -1,5 +1,6 @@
+
 import { useState, useRef, useEffect } from "react";
-import "../styles.css/InputChat.css";
+import "../styles/InputChat.css";
 
 export default function InputChat() {
   const [message, setMessage] = useState("");
