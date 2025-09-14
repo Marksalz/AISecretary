@@ -1,0 +1,92 @@
+/* Container for the whole chat */
+.chat-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+/* Chat header */
+.chat-container h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Chat history box */
+.chat-history {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 200px;
+  margin-bottom: 1rem;
+  background-color: #f9f9f9;
+  overflow-y: auto;
+}
+
+/* Individual message */
+.chat-message {
+  margin-bottom: 0.5rem;
+  display: flex;
+}
+
+/* User messages align right */
+.chat-message.user {
+  justify-content: flex-end;
+}
+
+/* Bot messages align left */
+.chat-message.bot {
+  justify-content: flex-start;
+}
+
+/* Message bubble */
+.chat-message span {
+  display: inline-block;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+/* Style for user message bubble */
+.chat-message.user span {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Style for bot message bubble */
+.chat-message.bot span {
+  background-color: #e5e5e5;
+  color: black;
+}
+
+/* Input area */
+.chat-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Text input */
+.chat-input input {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+/* Send button */
+.chat-input button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.chat-input button:hover {
+  background-color: #0056b3;
+}
