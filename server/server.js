@@ -1,8 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import chatRoutes from "./routes/chat.js";
-import googleAuthRoutes from "./utils/googleAuth.js";
+import cookieParser from "cookie-parser";
+import router from "./routes.js";
 
 dotenv.config();
 
@@ -12,10 +12,10 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.use(cookieParser());
 
 // Routes
-app.use("/chat", chatRoutes);
-app.use("/", googleAuthRoutes); // OAuth2 routes
+app.use(router);
 
 // Start server
 app.listen(PORT, () => {

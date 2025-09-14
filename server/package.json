@@ -25,6 +25,8 @@
     "express": "^5.1.0",
     "googleapis": "^159.0.0",
     "open": "^10.2.0",
-    "readline-sync": "^1.4.10"
+    "readline-sync": "^1.4.10",
+     "cookie-parser": "^1.4.7",
+     "jsonwebtoken": "^9.0.2"
   }
 }
