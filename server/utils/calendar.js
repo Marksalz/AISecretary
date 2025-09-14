@@ -12,19 +12,19 @@ export async function addEvent(title, start, end, description = "") {
     end: { dateTime: end },
   };
 
-  const response = await calendar.events.insert({
+  const response = calendar.events.insert({
     calendarId: "primary",
     resource: event,
   });
 
-  return response.data;
+  return response;
 }
 
 export async function listEvents(keyword) {
   const auth = await getAuthClient();
   const calendar = google.calendar({ version: "v3", auth });
 
-  const res = await calendar.events.list({
+  const res = calendar.events.list({
     calendarId: "primary",
     maxResults: 50,
     singleEvents: true,
