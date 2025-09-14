@@ -1,5 +1,4 @@
-import { askGemini } from '../services/chatServices.js';
-
+import { askGemini } from "../services/chatServices.js";
 
 async function extractEventDetails(message) {
   const prompt = `Extract event details from this message in JSON format. Include these fields if mentioned:
@@ -21,62 +20,89 @@ async function extractEventDetails(message) {
   try {
     const response = await askGemini(prompt);
     const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Could not extract event details');
+    if (!jsonMatch) throw new Error("Could not extract event details");
     console.log(jsonMatch[0]);
-    
+
     return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error('Error extracting event details:', error);
-    throw new Error('Failed to extract event details');
+    console.error("Error extracting event details:", error);
+    throw new Error("Failed to extract event details");
   }
 }
-
 
 async function handleChatMessage(req, res) {
   try {
     const { message } = req.body;
-    
-    if (!message || typeof message !== 'string') {
+
+    if (!message || typeof message !== "string") {
       return res.status(400).json({
         success: false,
-        error: 'Message is required and must be a string.'
+        error: "Message is required and must be a string.",
       });
     }
 
     const trimmedMessage = message.trim().toLowerCase();
-    
-    if (trimmedMessage.includes('add to calendar') || 
-        trimmedMessage.startsWith('add ') ) {
-      
+
+    if (
+      trimmedMessage.includes("add to calendar") ||
+      trimmedMessage.startsWith("add ")
+    ) {
       const eventDetails = await extractEventDetails(trimmedMessage);
-      
-      return res.status(200).json({
-        success: true,
-        data: {
-          type: 'calendar_event',
-          message: 'I\'ll add this event to your calendar:',
-          event: eventDetails,
-          timestamp: new Date().toISOString()
+
+      // Forward the extracted event to the events/create endpoint so it is added to user's Google Calendar
+      try {
+        const response = await fetch(`http://localhost:3000/events/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(eventDetails),
+        });
+
+        const calendarResult = await response
+          .json()
+          .catch(() => ({ error: "Invalid JSON from calendar service" }));
+
+        if (!response.ok) {
+          return res
+            .status(response.status)
+            .json({ success: false, error: calendarResult });
         }
-      });
+
+        return res.status(200).json({
+          success: true,
+          data: {
+            type: "calendar_event",
+            message: "Event added to your Google Calendar",
+            calendar: calendarResult,
+            event: eventDetails,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        console.error("Error forwarding event to calendar endpoint:", err);
+        return res
+          .status(500)
+          .json({ success: false, error: "Failed to add event to calendar" });
+      }
     }
-    
+
     const aiResponse = await askGemini(trimmedMessage);
-    
+
     return res.status(200).json({
       success: true,
       data: {
-        type: 'message',
+        type: "message",
         message: aiResponse,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
-    
   } catch (error) {
-    console.error('Error in handleChatMessage:', error);
+    console.error("Error in handleChatMessage:", error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'An error occurred while processing your message.'
+      error:
+        error.message || "An error occurred while processing your message.",
     });
   }
 }
