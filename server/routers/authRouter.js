@@ -72,7 +72,7 @@ authRouter.get("/google/callback", async (req, res) => {
     sameSite: "lax",
   });
 
-  res.redirect("http://localhost:5173/welcome");
+  res.redirect("http://localhost:5173/chat");
 });
 
 export default authRouter;

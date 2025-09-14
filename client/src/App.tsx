@@ -1,10 +1,10 @@
 import "./App.css";
-import InputChat from "./components/InputChat";
+import Welcome from "./pages/Welcome";
 
 function App() {
   return (
     <>
-      <InputChat></InputChat>
+      <Welcome />
     </>
   );
 }
