@@ -1,17 +1,10 @@
-import express from 'express';
-import { handleChatMessage } from '../controllers/chatController.js';
+import express from "express";
+import { chatController } from "../controllers/chatController.js";
+import { requireAuth } from "../middleware/middleware.js";
+import { handleChatMessage } from "../controllers/chatController.js";
 
-const router = express.Router();
+const chatRouter = express.Router();
 
-// POST /chat - Send a message
-router.post('/', (req, res) => {
-  if (!req.body || !req.body.message) {
-    return res.status(400).json({
-      success: false,
-      error: 'field messages is required'
-    });
-  }
-  handleChatMessage(req, res);
-});
+chatRouter.post("/", requireAuth, handleChatMessage(req, res));
 
-export default router;
+export default chatRouter;
