@@ -1,5 +1,7 @@
 import { useState } from "react";
 import "../styles/InputChat.css";
+
+
 export default function InputChat() {
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<
