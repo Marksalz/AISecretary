@@ -1,9 +1,9 @@
 import express from "express";
 import { chatController } from "../controllers/chatController.js";
 
-const router = express.Router();
+const chatRouter = express.Router();
 
 // Map POST /chat to the controller
-router.post("/", chatController);
+chatRouter.post("/", chatController);
 
-export default router;
+export default chatRouter;
