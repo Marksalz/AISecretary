@@ -154,31 +154,40 @@ class ChatService {
     const startDate = new Date(start);
     const endDate = new Date(end);
     
-    // If it's an all-day event (no time specified)
+    // Format de date lisible
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    };
+    
+    // Si c'est un événement toute la journée
     if (start.includes('T00:00:00') && end.includes('T00:00:00')) {
-      return startDate.toLocaleDateString();
+      return startDate.toLocaleDateString('fr-FR', options);
     }
     
-    // If it's on the same day
+    // Si c'est le même jour
     if (startDate.toDateString() === endDate.toDateString()) {
-      return `${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString()} - ${endDate.toLocaleTimeString()}`;
+      return `${startDate.toLocaleDateString('fr-FR', options)} - ${endDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     }
     
-    // Different days
-    return `${startDate.toLocaleString()} - ${endDate.toLocaleString()}`;
+    // Jours différents
+    return `${startDate.toLocaleString('fr-FR', options)} - ${endDate.toLocaleString('fr-FR', options)}`;
   }
 
   /**
-   * Format event data into a readable string
+   * Format event data into a readable string (for display purposes)
    * @param {Object} event - Event data object
    * @returns {string} Formatted event information
    */
   formatEventForDisplay(event) {
-    if (!event) return 'No event data to display';
+    if (!event) return 'Aucune donnée d\'événement à afficher';
     
     const dateStr = this._formatDateRange(event.start, event.end);
     
-    let response = `📅 ${event.title || 'Untitled Event'}\n`;
+    let response = `📅 ${event.title || 'Événement sans titre'}\n`;
     response += `   ⏰ ${dateStr}\n`;
     
     if (event.location) {
