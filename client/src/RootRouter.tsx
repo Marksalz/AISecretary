@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Welcome from "./Welcome";
 import App from "./App";
+import InputChat from "./pages/InputChat";
 
 export default function RootRouter() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/welcome" element={<Welcome />} />
+        <Route path="/chat" element={<InputChat />} />
       </Routes>
     </BrowserRouter>
   );

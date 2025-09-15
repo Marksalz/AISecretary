@@ -1,9 +1,9 @@
 import express from "express";
-import { chatController } from "../controllers/chatController.js";
+import { requireAuth } from "../middleware/middleware.js";
+import { handleChatMessage } from "../controllers/chatController.js";
 
 const chatRouter = express.Router();
 
-// Map POST /chat to the controller
-chatRouter.post("/", chatController);
+chatRouter.post("/", requireAuth, handleChatMessage);
 
 export default chatRouter;
