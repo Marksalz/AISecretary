@@ -46,47 +46,6 @@ function normalize(message) {
   return message.trim().toLowerCase();
 }
 
-// === Parsing horaires relatifs ===
-function parseEventTimes(message) {
-  const results = chrono.parse(message, new Date());
-  if (results.length === 0) return {};
-
-  let start = results[0].start.date();
-
-  // --- Fix chrono misinterpreting "tomorrow" ---
-  if (/tomorrow/i.test(message)) {
-    const now = new Date();
-    if (start.getDate() === now.getDate()) {
-      start.setDate(start.getDate() + 1);
-    }
-  }
-
-  let end = start;
-
-  if (results[0].end) {
-    end = results[0].end.date();
-  } else {
-    const match = message.match(/for (\d+)\s*(hour|hours|minute|minutes)/i);
-    if (match) {
-      const value = parseInt(match[1], 10);
-      if (/hour/i.test(match[2]))
-        end = new Date(start.getTime() + value * 60 * 60 * 1000);
-      else if (/minute/i.test(match[2]))
-        end = new Date(start.getTime() + value * 60 * 1000);
-    } else {
-      end = new Date(start.getTime() + 60 * 60 * 1000); // default = 1 hour
-    }
-  }
-
-  // --- Return both UTC (for Google) and Local (for user feedback) ---
-  return {
-    startUtc: start.toISOString(),
-    endUtc: end.toISOString(),
-    startLocal: start.toLocaleString("en-GB", { hour12: true }),
-    endLocal: end.toLocaleString("en-GB", { hour12: true }),
-  };
-}
-
 // === Gestion des messages ===
 export async function handleMessage(
   message,
