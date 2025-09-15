@@ -1,10 +1,13 @@
+import { askGemini } from "../ai/gemini.js";
 import {
   normalize,
   isEventRequest,
   isEventQuery,
 } from "../utils/messageUtils.js";
-import { handleEventRequest, handleEventQuery } from "./eventHandler.js";
-import { askGemini } from "../ai/gemini.js";
+import {
+  handleEventRequest,
+  handleEventQuery,
+} from "../services/eventHandler.js";
 
 export async function handleMessage(
   message,
@@ -14,20 +17,18 @@ export async function handleMessage(
   const normalizedMsg = normalize(message);
   const isFollowUp = conversationHistory.some((msg) => msg.requiresMoreInfo);
 
-  // --- Cas 1 : add event ---
   if (isEventRequest(normalizedMsg) || isFollowUp) {
     return handleEventRequest(message, user);
   }
 
-  // --- Cas 2 : list events ---
   if (isEventQuery(normalizedMsg)) {
     return handleEventQuery();
   }
 
-  // --- Cas 3 : fallback with Gemini ---
+  // fallback chat
   const prompt = `You are a friendly AI assistant for a chat application that also manages a user's calendar.
-- Answer naturally and informally, as if chatting with a friend.
-- Keep responses short and engaging.
+- Always answer naturally and informally, as if chatting with a friend.
+- Keep responses short, clear, and engaging.
 
 User: "${message}"
 AI:`;

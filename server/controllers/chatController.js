@@ -1,7 +1,5 @@
 import { handleMessage } from "../services/chatServices.js";
 
-let conversationHistory = [];
-
 export async function chatController(req, res) {
   try {
     const { message } = req.body;
@@ -12,14 +10,21 @@ export async function chatController(req, res) {
         .json({ success: false, error: "Message required" });
     }
 
-    // Pass req.user (set by JWT middleware) for Google Calendar integration
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    if (!req.user.conversationHistory) {
+      req.user.conversationHistory = [];
+    }
+
     const response = await handleMessage(
       message,
-      conversationHistory,
+      req.user.conversationHistory,
       req.user
     );
 
-    conversationHistory.push({
+    req.user.conversationHistory.push({
       userMessage: message,
       requiresMoreInfo: response.requiresMoreInfo || false,
     });
