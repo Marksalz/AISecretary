@@ -2,7 +2,7 @@ import login from "../src/assets/avatar.png"
 import logout from "../src/assets/enter.png"
 import logo from "../src/assets/logo.png"
 import schedule from '../src/assets/schedule.png'
-import "../Layout-app/style/Header.css"
+import "../Layout-app/style/Header.css" 
 
 export default function Header(){
 
