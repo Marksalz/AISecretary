@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import InputChat from "./components/InputChat";
+import InputChat from "./pages/InputChat";
 import Layout from "../Layout-app/Layout.js"
 
 
