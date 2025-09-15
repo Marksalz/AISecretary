@@ -58,10 +58,9 @@ export const authController = {
     const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
-    // Send back your own JWT (cookie-based or redirect)
+    // Send back your own JWT (cookie-based)
     res.cookie("token", jwtToken, {
       httpOnly: true,
-      
     });
     res.redirect("http://localhost:5173/chat");
   },

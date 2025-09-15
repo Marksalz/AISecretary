@@ -11,7 +11,19 @@ const InputChat = () => {
   const [message, setMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/user/me", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setUser(data.user);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+      });
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -116,43 +128,64 @@ const InputChat = () => {
   };
 
   return (
-    <div className="chat-container">
-      <h2>Assistant AI</h2>
+    <>
+      {user && (
+        <div className="chat-container">
+          <h2>Assistant AI</h2>
 
-      <div className="chat-history">
-        {chatHistory.map((msg, index) => (
-          <div key={index} className={`message ${msg.sender}`}>
-            <strong>{msg.sender === "user" ? "You" : "Assistant"}:</strong>
-            <div className="message-content">
-              {msg.isHtml ? (
-                <div dangerouslySetInnerHTML={{ __html: msg.text }} />
-              ) : (
-                msg.text.split("\n").map((line, i) => (
-                  <p key={i} style={{ margin: 0 }}>
-                    {line}
-                  </p>
-                ))
-              )}
-            </div>
+          <div className="chat-history">
+            {chatHistory.map((msg, index) => (
+              <div key={index} className={`message ${msg.sender}`}>
+                <strong>{msg.sender === "user" ? "You" : "Assistant"}:</strong>
+                <div className="message-content">
+                  {msg.isHtml ? (
+                    <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+                  ) : (
+                    msg.text.split("\n").map((line, i) => (
+                      <p key={i} style={{ margin: 0 }}>
+                        {line}
+                      </p>
+                    ))
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={bottomRef} />
           </div>
-        ))}
-        <div ref={bottomRef} />
-      </div>
 
-      <div className="chat-input">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message..."
-          disabled={isLoading}
-        />
-        <button onClick={handleSend} disabled={!message.trim() || isLoading}>
-          {isLoading ? "Sending..." : "Send"}
-        </button>
-      </div>
-    </div>
+          <div className="chat-input">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message..."
+              disabled={isLoading}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!message.trim() || isLoading}
+            >
+              {isLoading ? "Sending..." : "Send"}
+            </button>
+          </div>
+        </div>
+      )}
+      {!user && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "80vh",
+          }}
+        >
+          <p style={{ color: "red", fontSize: "2rem", fontWeight: "bold" }}>
+            Unauthorized user!!
+          </p>
+        </div>
+      )}
+    </>
   );
 };
 
