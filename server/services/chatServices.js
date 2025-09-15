@@ -104,10 +104,6 @@ Output:`;
         eventData = {};
       }
 
-      /*   const times = parseEventTimes(message);
-      eventData.start = times.startUtc;
-      eventData.end = times.endUtc;*/
-
       if (!eventData.title) {
         const aiPrompt = await askGemini(
           "Please provide the title of your event."
