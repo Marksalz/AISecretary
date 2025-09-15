@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import "../styles/InputChat.css";
-
 interface Message {
   sender: "user" | "bot";
   text: string;
   isHtml?: boolean;
-  eventData?: any; // For calendar events
+  eventData?: any;
 }
 
 const InputChat = () => {
@@ -18,17 +17,16 @@ const InputChat = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
-  // Format event details for display
   const formatEventDetails = (event: any): string => {
     if (!event) return "No event details available";
 
     let details = "";
-    if (event.title) details += ` Title: ${event.title}\n`;
+    if (event.title) details += `Title: ${event.title}\n`;
     if (event.start)
-      details += ` Start: ${new Date(event.start).toLocaleString()}\n`;
-    if (event.end) details += ` End: ${new Date(event.end).toLocaleString()}\n`;
-    if (event.location) details += ` Location: ${event.location}\n`;
-    if (event.description) details += ` ${event.description}\n`;
+      details += `Start: ${new Date(event.start).toLocaleString()}\n`;
+    if (event.end) details += `End: ${new Date(event.end).toLocaleString()}\n`;
+    if (event.location) details += `Location: ${event.location}\n`;
+    if (event.description) details += `${event.description}\n`;
 
     return details;
   };
@@ -46,35 +44,50 @@ const InputChat = () => {
       const response = await fetch("http://localhost:3000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmedMessage }),
         credentials: "include",
+        body: JSON.stringify({ message: trimmedMessage }),
       });
-
       if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`HTTP error ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
 
-      // Handle bot response
       if (data.success) {
         let botMessage: Message;
 
-        if (data.data.type === "calendar_event") {
-          // Format calendar event response
-          botMessage = {
-            sender: "bot",
-            text: `${data.data.message}\n\n${formatEventDetails(
-              data.data.event
-            )}`,
-            eventData: data.data.event,
-          };
-        } else {
-          // Regular message response
-          botMessage = {
-            sender: "bot",
-            text: data.data.message,
-          };
+        switch (data.data.type) {
+          case "calendar_event":
+            botMessage = {
+              sender: "bot",
+              text: `${data.data.message}\n\n${formatEventDetails(
+                data.data.event
+              )}`,
+              eventData: data.data.event,
+            };
+            break;
+
+          case "calendar_query":
+            const eventsText = data.data.events
+              .map(
+                (evt: any, idx: number) =>
+                  `Event ${idx + 1}:\n${formatEventDetails(evt)}`
+              )
+              .join("\n");
+            botMessage = {
+              sender: "bot",
+              text: `${data.data.message}\n\n${eventsText}`,
+            };
+            break;
+
+          case "chat_response":
+          default:
+            botMessage = {
+              sender: "bot",
+              text: data.data.message,
+            };
+            break;
         }
 
         setChatHistory((prev) => [...prev, botMessage]);
@@ -114,7 +127,11 @@ const InputChat = () => {
               {msg.isHtml ? (
                 <div dangerouslySetInnerHTML={{ __html: msg.text }} />
               ) : (
-                msg.text
+                msg.text.split("\n").map((line, i) => (
+                  <p key={i} style={{ margin: 0 }}>
+                    {line}
+                  </p>
+                ))
               )}
             </div>
           </div>
