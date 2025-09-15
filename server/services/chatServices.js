@@ -1,6 +1,7 @@
 import axios from "axios";
 import * as chrono from "chrono-node";
 import dotenv from "dotenv";
+import { addEventToGoogleCalendar } from "./eventServices.js";
 
 dotenv.config();
 
@@ -80,7 +81,11 @@ function parseEventTimes(message) {
 }
 
 // === Gestion des messages ===
-export async function handleMessage(message, conversationHistory = []) {
+export async function handleMessage(
+  message,
+  conversationHistory = [],
+  user = {}
+) {
   const normalizedMsg = normalize(message);
   const isFollowUp = conversationHistory.some((msg) => msg.requiresMoreInfo);
 
@@ -88,53 +93,50 @@ export async function handleMessage(message, conversationHistory = []) {
   if (isEventRequest(normalizedMsg) || isFollowUp) {
     try {
       const prompt = `You are an intelligent assistant that extracts event details from user messages.
-Always return a complete JSON object with the following fields:
-- title (string, provide a sensible default if missing)
-- start (ISO date string, estimate a reasonable time if not specified)
-- end (ISO date string, estimate a reasonable duration if not specified)
-- location (string, use empty string if unknown)
-- description (string, use empty string if unknown)
+            Always return a complete JSON object with the following fields:
+            - title (string, provide a sensible default if missing)
+            - start (ISO date string, estimate a reasonable time if not specified)
+            - end (ISO date string, estimate a reasonable duration if not specified)
+            - location (string, use empty string if unknown)
+            - description (string, use empty string if unknown)
 
-Do NOT include any text outside of JSON. Do NOT add explanations.
+            Do NOT include any text outside of JSON. Do NOT add explanations.
 
-Examples:
-Message: "Add team meeting tomorrow at 2pm for 1 hour"
-Output:
-{
-  "title": "Team Meeting",
-  "start": "2025-09-15T14:00:00+03:00",
-  "end": "2025-09-15T15:00:00+03:00",
-  "location": "",
-  "description": ""
-}
+            Examples:
+            Message: "Add team meeting tomorrow at 2pm for 1 hour"
+            Output:
+            {
+              "title": "Team Meeting",
+              "start": "2025-09-15T14:00:00+03:00",
+              "end": "2025-09-15T15:00:00+03:00",
+              "location": "",
+              "description": ""
+            }
 
-Message: "Book a dentist appointment next Wednesday"
-Output:
-{
-  "title": "Dentist Appointment",
-  "start": "2025-09-17T10:00:00+03:00",
-  "end": "2025-09-17T11:00:00+03:00",
-  "location": "",
-  "description": ""
-}
+            Message: "Book a dentist appointment next Wednesday"
+            Output:
+            {
+              "title": "Dentist Appointment",
+              "start": "2025-09-17T10:00:00+03:00",
+              "end": "2025-09-17T11:00:00+03:00",
+              "location": "",
+              "description": ""
+            }
 
-Message: "${message}"
-Output:`;
+            Message: "${message}"
+            Output:`;
 
       const extracted = await askPerplexity(prompt);
       let eventData;
       try {
         eventData = JSON.parse(extracted);
-        console.log("try");
       } catch {
         eventData = {};
-        console.log("catch");
       }
 
       const times = parseEventTimes(message);
       eventData.start = times.start;
       eventData.end = times.end;
-      console.log(eventData);
 
       if (!eventData.title) {
         const aiPrompt = await askPerplexity(
@@ -158,12 +160,36 @@ Output:`;
         };
       }
 
+      // --- Google Calendar Integration ---
+      // Use tokens from user object (req.user)
+      const accessToken = user.googleAccessToken;
+      const refreshToken = user.googleRefreshToken;
+      let calendarResult = null;
+      if (accessToken && refreshToken) {
+        try {
+          calendarResult = await addEventToGoogleCalendar(
+            eventData,
+            accessToken,
+            refreshToken
+          );
+        } catch (calendarError) {
+          return {
+            success: false,
+            error: `Google Calendar error: ${calendarError.message}`,
+            data: { event: eventData },
+          };
+        }
+      }
+
       return {
         success: true,
         data: {
           type: "calendar_event",
-          message: "Event successfully added (simulated)!",
+          message: calendarResult
+            ? "Event added to Google Calendar!"
+            : "Event created (Google Calendar not connected)",
           event: eventData,
+          googleCalendar: calendarResult || null,
         },
       };
     } catch (error) {

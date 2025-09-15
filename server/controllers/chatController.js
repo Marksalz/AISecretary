@@ -12,7 +12,12 @@ export async function chatController(req, res) {
         .json({ success: false, error: "Message required" });
     }
 
-    const response = await handleMessage(message, conversationHistory);
+    // Pass req.user (set by JWT middleware) for Google Calendar integration
+    const response = await handleMessage(
+      message,
+      conversationHistory,
+      req.user
+    );
 
     conversationHistory.push({
       userMessage: message,
