@@ -208,7 +208,20 @@ Output:`;
 
   // --- Cas 3 : fallback chat via Perplexity ---
   try {
-    const answer = await askPerplexity(message);
+    const prompt = `You are a friendly AI assistant for a chat application that also manages a user's calendar.
+- Always answer naturally and informally, as if chatting with a friend.
+- Keep responses short, clear, and engaging.
+- Do NOT explain grammar or give dictionary-like definitions.
+- Do NOT include citations or links.
+
+Examples:
+User: "Salut, comment tu vas ?"
+AI: "Ça va bien, et toi ?"
+
+User: "${message}"
+AI:`;
+
+    const answer = await askPerplexity(prompt);
     return {
       success: true,
       data: {
