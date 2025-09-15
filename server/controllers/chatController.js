@@ -1,4 +1,5 @@
 import { askGemini } from "../services/chatServices.js";
+import { addEventToGoogleCalendar } from "../services/eventServices.js";
 
 async function extractEventDetails(message) {
   const prompt = `Extract event details from this message in JSON format. Include these fields if mentioned:
@@ -60,16 +61,12 @@ async function handleChatMessage(req, res) {
         const accessToken = user.googleAccessToken;
         const refreshToken = user.googleRefreshToken;
         if (!accessToken || !refreshToken) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              error: "Google tokens not available on user token",
-            });
+          return res.status(400).json({
+            success: false,
+            error: "Google tokens not available on user token",
+          });
         }
 
-        // Import and call the helper function
-        const { addEventToGoogleCalendar } = await import("./eventsHelper.js");
         const calendarResult = await addEventToGoogleCalendar(
           eventDetails,
           accessToken,
@@ -88,12 +85,10 @@ async function handleChatMessage(req, res) {
         });
       } catch (err) {
         console.error("Error adding event to calendar:", err);
-        return res
-          .status(500)
-          .json({
-            success: false,
-            error: err.message || "Failed to add event to calendar",
-          });
+        return res.status(500).json({
+          success: false,
+          error: err.message || "Failed to add event to calendar",
+        });
       }
     }
 
