@@ -8,7 +8,6 @@ export function requireAuth(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    console.log('in middleware');
     
     next();
   } catch (err) {
