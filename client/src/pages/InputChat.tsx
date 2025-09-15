@@ -95,7 +95,7 @@ const InputChat = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
-    }
+    } 
   };
 
   return (
