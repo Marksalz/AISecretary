@@ -62,6 +62,6 @@ export const authController = {
     res.cookie("token", jwtToken, {
       httpOnly: true,
     });
-    res.redirect("https://https://aisecretary.netlify.app/chat");
+    res.redirect("https://aisecretary.netlify.app/chat");
   },
 };
