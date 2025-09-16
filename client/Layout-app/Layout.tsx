@@ -4,10 +4,10 @@ import Header from "./Header.tsx";
 
 function Layout() {
   return (
-    <>  
-      <Header />      
+    <>
+      <Header />
       <main>
-        <Outlet />     
+        <Outlet />
       </main>
     </>
   );

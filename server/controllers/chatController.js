@@ -1,7 +1,5 @@
 import { handleMessage } from "../services/chatServices.js";
 
-let conversationHistory = [];
-
 export async function chatController(req, res) {
   try {
     const { message } = req.body;
@@ -12,9 +10,21 @@ export async function chatController(req, res) {
         .json({ success: false, error: "Message required" });
     }
 
-    const response = await handleMessage(message, conversationHistory);
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
 
-    conversationHistory.push({
+    if (!req.user.conversationHistory) {
+      req.user.conversationHistory = [];
+    }
+
+    const response = await handleMessage(
+      message,
+      req.user.conversationHistory,
+      req.user
+    );
+
+    req.user.conversationHistory.push({
       userMessage: message,
       requiresMoreInfo: response.requiresMoreInfo || false,
     });

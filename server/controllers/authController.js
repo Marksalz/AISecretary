@@ -23,46 +23,45 @@
       res.redirect(`${rootUrl}?${qs.toString()}`);
     },
 
-    // Step 2: Handle Google callback
-    googleCallback: async (req, res) => {
-      const code = req.query.code;
-      // Exchange code for tokens
-      const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          code,
-          client_id: process.env.GOOGLE_CLIENT_ID,
-          client_secret: process.env.GOOGLE_CLIENT_SECRET,
-          redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-          grant_type: "authorization_code",
-        }),
-      });
-      const googleTokens = await tokenRes.json();
-      console.log("Google tokens:", googleTokens);
-      // Get user profile
-      const userRes = await fetch(GOOGLE_USERINFO_URL, {
-        headers: { Authorization: `Bearer ${googleTokens.access_token}` },
-      });
-      const user = await userRes.json();
-      // TODO: Save user + googleTokens.refresh_token securely in your DB
-      // Step 3: Create your own JWT for your app
-      const payload = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        picture: user.picture,
-        googleAccessToken: googleTokens.access_token, // temporary access
-        googleRefreshToken: googleTokens.refresh_token, // save in DB for later refresh
-      };
-      const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "7d",
-      });
-      // Send back your own JWT (cookie-based or redirect)
-      res.cookie("token", jwtToken, {
-        httpOnly: true,
-        
-      });
-      res.redirect("http://localhost:5173/chat");
-    },
-  };
+  // Step 2: Handle Google callback
+  googleCallback: async (req, res) => {
+    const code = req.query.code;
+    // Exchange code for tokens
+    const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+        grant_type: "authorization_code",
+      }),
+    });
+    const googleTokens = await tokenRes.json();
+    console.log("Google tokens:", googleTokens);
+    // Get user profile
+    const userRes = await fetch(GOOGLE_USERINFO_URL, {
+      headers: { Authorization: `Bearer ${googleTokens.access_token}` },
+    });
+    const user = await userRes.json();
+    // TODO: Save user + googleTokens.refresh_token securely in your DB
+    // Step 3: Create your own JWT for your app
+    const payload = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      googleAccessToken: googleTokens.access_token, // temporary access
+      googleRefreshToken: googleTokens.refresh_token, // save in DB for later refresh
+    };
+    const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+    // Send back your own JWT (cookie-based)
+    res.cookie("token", jwtToken, {
+      httpOnly: true,
+    });
+    res.redirect("http://localhost:5173/chat");
+  },
+};
