@@ -70,7 +70,13 @@ export async function getEventsFromGoogleCalendar(
       singleEvents: true,
       orderBy: "startTime",
     });
-    return response.data.items;
+    // Ensure each event has an 'id' property (Google Calendar API should provide this)
+    // But for robustness, map and ensure id is present
+    const items = (response.data.items || []).map((event) => ({
+      ...event,
+      eventId: event.id || null,
+    }));
+    return items;
   } catch (err) {
     const message =
       err?.response?.data || err.message || "Failed to fetch events";
@@ -110,6 +116,7 @@ export async function updateEventInGoogleCalendar(
     start: { dateTime: new Date(eventDetails.start).toISOString() },
     end: { dateTime: new Date(eventDetails.end).toISOString() },
   };
+
   try {
     const updated = await calendar.events.update({
       calendarId: "primary",
