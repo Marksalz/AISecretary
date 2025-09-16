@@ -2,9 +2,17 @@ import {
   normalize,
   isEventRequest,
   isEventQuery,
+  isConfirmation,
+  isCancellation,
 } from "../utils/messageUtils.js";
-import { handleEventRequest, handleEventQuery } from "./eventHandler.js";
+import {
+  handleEventRequest,
+  handleEventQuery,
+  confirmEvent,
+} from "./eventHandler.js";
 import { askGemini } from "../ai/gemini.js";
+
+let pendingEvent = null;
 
 export async function handleMessage(
   message,
@@ -12,26 +20,59 @@ export async function handleMessage(
   user = {}
 ) {
   const normalizedMsg = normalize(message);
-  const isFollowUp = conversationHistory.some((msg) => msg.requiresMoreInfo);
 
-  // --- Cas 1 : add event ---
-  if (isEventRequest(normalizedMsg) || isFollowUp) {
-    return handleEventRequest(message, user);
+  if (pendingEvent) {
+    if (isConfirmation(normalizedMsg)) {
+      const res = await confirmEvent(pendingEvent, user);
+      pendingEvent = null;
+      return res;
+    }
+
+    if (isCancellation(normalizedMsg)) {
+      const res = {
+        success: true,
+        data: {
+          type: "calendar_event_cancelled",
+          message: "❌ Event creation cancelled.",
+          event: pendingEvent,
+        },
+      };
+      pendingEvent = null;
+      return res;
+    }
+
+    if (/location/i.test(normalizedMsg)) {
+      pendingEvent.location = message.replace(/.*location\s*/i, "").trim();
+      return _pendingResponse(
+        `Updated location to "${pendingEvent.location}". Confirm or cancel?`
+      );
+    }
+    if (/title/i.test(normalizedMsg)) {
+      pendingEvent.title = message.replace(/.*title\s*/i, "").trim();
+      return _pendingResponse(
+        `Updated title to "${pendingEvent.title}". Confirm or cancel?`
+      );
+    }
+
+    return _pendingResponse(
+      `You are currently creating an event: "${pendingEvent.title}". Confirm or cancel?`
+    );
   }
 
-  // --- Cas 2 : list events ---
+  if (isEventRequest(normalizedMsg)) {
+    const res = await handleEventRequest(message, user);
+    if (res.data?.event) pendingEvent = res.data.event;
+    return res;
+  }
+
   if (isEventQuery(normalizedMsg)) {
     return handleEventQuery();
   }
 
-  // --- Cas 3 : fallback with Gemini ---
-  const prompt = `You are a friendly AI assistant for a chat application that also manages a user's calendar.
-- Answer naturally and informally, as if chatting with a friend.
-- Keep responses short and engaging.
+  const prompt = `You are a friendly AI assistant. Answer naturally.
 
 User: "${message}"
 AI:`;
-
   const answer = await askGemini(prompt);
 
   return {
@@ -39,6 +80,18 @@ AI:`;
     data: {
       type: "chat_response",
       message: answer,
+    },
+  };
+}
+
+function _pendingResponse(message) {
+  return {
+    success: true,
+    requiresConfirmation: true,
+    data: {
+      type: "calendar_event_pending",
+      message,
+      event: pendingEvent,
     },
   };
 }
