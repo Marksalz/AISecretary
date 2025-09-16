@@ -1,27 +1,27 @@
-  import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
-  const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-  const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
+const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
-  export const authController = {
-    // Step 1: Redirect to Google OAuth
-    googleRedirect: (req, res) => {
-      const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
-      const options = {
-        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        access_type: "offline",
-        response_type: "code",
-        prompt: "consent",
-        scope: [
-          "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/userinfo.profile",
-          "https://www.googleapis.com/auth/calendar",
-        ].join(" "),
-      };
-      const qs = new URLSearchParams(options);
-      res.redirect(`${rootUrl}?${qs.toString()}`);
-    },
+export const authController = {
+  // Step 1: Redirect to Google OAuth
+  googleRedirect: (req, res) => {
+    const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+    const options = {
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      access_type: "offline",
+      response_type: "code",
+      prompt: "consent",
+      scope: [
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/calendar",
+      ].join(" "),
+    };
+    const qs = new URLSearchParams(options);
+    res.redirect(`${rootUrl}?${qs.toString()}`);
+  },
 
   // Step 2: Handle Google callback
   googleCallback: async (req, res) => {
@@ -62,6 +62,6 @@
     res.cookie("token", jwtToken, {
       httpOnly: true,
     });
-    res.redirect("http://localhost:5173/chat");
+    res.redirect("https://https://aisecretary.netlify.app/chat");
   },
 };
