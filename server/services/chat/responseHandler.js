@@ -2,7 +2,7 @@ import { getPendingEvent } from "./eventHandlers/eventCreation.js";
 
 export function createPendingResponse(message) {
   const pendingEvent = getPendingEvent();
-  
+
   return {
     success: true,
     requiresConfirmation: true,
