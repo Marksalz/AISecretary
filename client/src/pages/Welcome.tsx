@@ -8,7 +8,7 @@ export default function Welcome() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("http://localhost:5173/me", {
+        const res = await fetch("http://localhost:3000/me", {
           method: "GET",
           credentials: "include", // important pour HttpOnly cookie
         });
