@@ -39,7 +39,7 @@ export const authController = {
       }),
     });
     const googleTokens = await tokenRes.json();
-    console.log("Google tokens:", googleTokens);
+
     // Get user profile
     const userRes = await fetch(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${googleTokens.access_token}` },
@@ -62,6 +62,7 @@ export const authController = {
     res.cookie("token", jwtToken, {
       httpOnly: true,
     });
-    res.redirect("https://aisecretary.netlify.app/chat");
+    //res.redirect("https://aisecretary.netlify.app/chat");
+    res.redirect("http://localhost:5173/chat");
   },
 };
