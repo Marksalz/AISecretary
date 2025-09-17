@@ -18,13 +18,12 @@ Your role is to understand the user's intent (add, delete, update, or read an ev
 and return only a valid JSON object.
 
 Context:
-- The current datetime is ${new Date().toISOString()} (today is ${new Date().toDateString()}).
+- The current datetime is ${new Date().toISOString()}.
 - When the user says 'today', always use this date.
-
 
 Rules:
 - Output only JSON, no extra text.
-- The JSON must follow this structure do not add any backticks in the begining and end and the word json just follow the example format:
+- The JSON must follow this structure. Do not add any backticks at the beginning or end and do not include the word 'json'. Just follow the example format:
 
 For "add":
 {
@@ -48,6 +47,13 @@ For "read", "delete", or "update":
     "eventId": string | null       // (for read: always include eventId if found)
   }
 }
+
+If the user is just making conversation or not asking about the calendar, return a JSON object: 
+{
+  "type": "talk",
+  "keyword": null,        
+  "data":null
+}, .
 
 - If a piece of information is not provided, set it to null.
 - For "read", always provide timeMin and timeMax covering the requested interval.
@@ -104,6 +110,14 @@ Response:
     "eventId": "ghi789"
   }
 }
+
+User: "How are you today?"  
+Response:
+{
+  "type": "talk",
+  "keyword": null,        
+  "data":null
+}
 `;
 
 export async function askGemini(message, useCalendarPrompt = false) {
@@ -115,6 +129,9 @@ export async function askGemini(message, useCalendarPrompt = false) {
     const result = await model.generateContent(prompt);
 
     let text = result.response.text();
+    if (!useCalendarPrompt) {
+      return text;
+    }
     // Remove code block markers and 'json' if present
     text = text
       .trim()

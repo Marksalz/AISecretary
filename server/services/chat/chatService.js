@@ -9,7 +9,9 @@ import {
   updatePendingEvent,
   getPendingEvent,
   cancelEvent,
-} from "./eventHandlers/eventCreation.js";
+  setPendingEvent,
+  clearPendingEvent,
+} from "./eventHandlers/eventConfirmation.js";
 import {
   createPendingResponse,
   createChatResponse,
@@ -20,19 +22,80 @@ import deleteEvent from "./eventHandlers/eventDelete.js";
 import readEvent from "./eventHandlers/eventRead.js";
 import createEvent from "./eventHandlers/eventCreate.js";
 
+// Store pending action type (add, update, delete) and data
+let pendingAction = null;
+function setPendingAction(action) {
+  pendingAction = action;
+}
+function getPendingAction() {
+  return pendingAction;
+}
+function clearPendingAction() {
+  pendingAction = null;
+}
+
 export async function handleMessage(
   message,
   conversationHistory = [],
   user = {}
 ) {
   const pendingEvent = getPendingEvent();
-  if (pendingEvent) {
+  const pendingActionObj = getPendingAction();
+  if (pendingEvent || pendingActionObj) {
     const normalizedMsg = normalize(message);
     if (isConfirmation(normalizedMsg)) {
-      const res = await confirmEvent(user);
-      return res;
+      // Confirm the pending action
+      if (pendingActionObj) {
+        const {
+          type,
+          data,
+          user: actionUser,
+          keyword,
+          updateDetails,
+          eventId,
+        } = pendingActionObj;
+        clearPendingAction();
+        if (type === "add") {
+          // Confirm create
+          const created = await createEvent(
+            data,
+            actionUser.googleAccessToken,
+            actionUser.googleRefreshToken
+          );
+          clearPendingEvent();
+          return created;
+        } else if (type === "update") {
+          // Confirm update
+          // Actually perform the update now
+          const updated = await updateEvent(
+            data,
+            actionUser.googleAccessToken,
+            actionUser.googleRefreshToken,
+            updateDetails.message,
+            keyword
+          );
+          clearPendingEvent();
+          return updated;
+        } else if (type === "delete") {
+          // Confirm delete
+          // Actually perform the delete now
+          const deleted = await deleteEvent(
+            data,
+            actionUser.googleAccessToken,
+            actionUser.googleRefreshToken,
+            keyword
+          );
+          clearPendingEvent();
+          return deleted;
+        }
+      } else {
+        // Fallback to event confirmation
+        const res = await confirmEvent(user);
+        return res;
+      }
     }
     if (isCancellation(normalizedMsg)) {
+      clearPendingAction();
       return cancelEvent();
     }
     if (/location/i.test(normalizedMsg)) {
@@ -50,7 +113,7 @@ export async function handleMessage(
       );
     }
     return createPendingResponse(
-      `You are currently creating an event: "${pendingEvent.title}". Confirm or cancel?`
+      `You are currently creating or modifying an event. Confirm or cancel?`
     );
   }
 
@@ -70,11 +133,15 @@ export async function handleMessage(
   const { type, data, keyword } = aiResponse;
 
   if (type === "add") {
-    // Add event directly
-    return await createEvent(
-      data,
-      user.googleAccessToken,
-      user.googleRefreshToken
+    // Store pending event and ask for confirmation
+    setPendingEvent(data);
+    setPendingAction({ type: "add", data, user });
+    return createPendingResponse(
+      `Do you want to add this event?\n\nTitle: ${
+        data.title || "N/A"
+      }\nStart: ${data.start || "N/A"}\nEnd: ${data.end || "N/A"}\nLocation: ${
+        data.location || "N/A"
+      }`
     );
   } else if (type === "read") {
     // Read events in the given time range
@@ -85,26 +152,39 @@ export async function handleMessage(
       data.timeMax
     );
   } else if (type === "update") {
-    // Improved update: after finding the event, ask Gemini which fields to update, then update only those fields
-    return await updateEvent(
+    // Store pending update and ask for confirmation
+    setPendingEvent(data);
+    setPendingAction({
+      type: "update",
       data,
-      user.googleAccessToken,
-      user.googleRefreshToken,
-      message,
-      keyword
+      user,
+      keyword,
+      updateDetails: { message },
+    });
+    return createPendingResponse(
+      `Do you want to update the event "${
+        data.title || keyword || "N/A"
+      }"? Please confirm or cancel.`
     );
   } else if (type === "delete") {
-    // Delete event by searching for the event first to get its eventId
-    return await deleteEvent(
-      data,
-      user.googleAccessToken,
-      user.googleRefreshToken,
-      keyword
+    // Store pending delete and ask for confirmation
+    setPendingEvent(data);
+    setPendingAction({ type: "delete", data, user, keyword });
+    return createPendingResponse(
+      `Are you sure you want to delete the event "${
+        data.title || keyword || "N/A"
+      }"? Please confirm or cancel.`
     );
+  } else if (type === "talk") {
+    // Fallback: just chat like a person
+    const prompt = `You are a friendly AI assistant for a chat application that also manages a user's calendar.\n- Always answer naturally and informally, as if chatting with a friend.\n- Keep responses short, clear, and engaging.\n\nUser: "${message}"\nAI:`;
+    const answer = await askGemini(prompt);
+    return {
+      success: true,
+      data: {
+        type: "chat_response",
+        message: answer?.message || answer,
+      },
+    };
   }
-
-  // Fallback: just chat
-  return createChatResponse(
-    "Sorry, I couldn't understand your request. Please try again."
-  );
 }
