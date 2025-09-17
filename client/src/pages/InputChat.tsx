@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import "../styles/InputChat.css";
+
 interface Message {
   sender: "user" | "bot";
   text: string;
@@ -11,27 +12,16 @@ const InputChat = () => {
   const [message, setMessage] = useState<string>("");
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [user, setUser] = useState(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+   
 
-  useEffect(() => {
-    fetch("http://localhost:3000/user/me", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.user) {
-          setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
-      });
-  }, []);
-
+  // 🔹 Scroll automatique en bas du chat
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
   const formatEventDetails = (event: any): string => {
     if (!event) return "No event details available";
-
     let details = "";
     if (event.title) details += `Title: ${event.title}\n`;
     if (event.start)
@@ -39,7 +29,6 @@ const InputChat = () => {
     if (event.end) details += `End: ${new Date(event.end).toLocaleString()}\n`;
     if (event.location) details += `Location: ${event.location}\n`;
     if (event.description) details += `${event.description}\n`;
-
     return details;
   };
 
@@ -59,6 +48,7 @@ const InputChat = () => {
         credentials: "include",
         body: JSON.stringify({ message: trimmedMessage }),
       });
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP error ${response.status}: ${errorText}`);
@@ -93,13 +83,8 @@ const InputChat = () => {
             };
             break;
 
-          case "chat_response":
           default:
-            botMessage = {
-              sender: "bot",
-              text: data.data.message,
-            };
-            break;
+            botMessage = { sender: "bot", text: data.data.message };
         }
 
         setChatHistory((prev) => [...prev, botMessage]);
@@ -108,13 +93,15 @@ const InputChat = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      const errorMessage: Message = {
-        sender: "bot",
-        text: `Sorry, an error occurred: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      };
-      setChatHistory((prev) => [...prev, errorMessage]);
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          sender: "bot",
+          text: `Sorry, an error occurred: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -124,68 +111,47 @@ const InputChat = () => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
-    } 
+    }
   };
 
   return (
-    <>
-      {user && (
-        <div className="chat-container">
-          <h2>Assistant AI</h2>
+    <div className="chat-container">
+      <h2>Assistant AI</h2>
 
-          <div className="chat-history">
-            {chatHistory.map((msg, index) => (
-              <div key={index} className={`message ${msg.sender}`}>
-                <strong>{msg.sender === "user" ? "You" : "Assistant"}:</strong>
-                <div className="message-content">
-                  {msg.isHtml ? (
-                    <div dangerouslySetInnerHTML={{ __html: msg.text }} />
-                  ) : (
-                    msg.text.split("\n").map((line, i) => (
-                      <p key={i} style={{ margin: 0 }}>
-                        {line}
-                      </p>
-                    ))
-                  )}
-                </div>
-              </div>
-            ))}
-            <div ref={bottomRef} />
+      <div className="chat-history">
+        {chatHistory.map((msg, index) => (
+          <div key={index} className={`message ${msg.sender}`}>
+            <strong>{msg.sender === "user" ? "You" : "Assistant"}:</strong>
+            <div className="message-content">
+              {msg.isHtml ? (
+                <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+              ) : (
+                msg.text.split("\n").map((line, i) => (
+                  <p key={i} style={{ margin: 0 }}>
+                    {line}
+                  </p>
+                ))
+              )}
+            </div>
           </div>
+        ))}
+        <div ref={bottomRef} />
+      </div>
 
-          <div className="chat-input">
-            <input
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              disabled={isLoading}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!message.trim() || isLoading}
-            >
-              {isLoading ? "Sending..." : "Send"}
-            </button>
-          </div>
-        </div>
-      )}
-      {!user && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "80vh",
-          }}
-        >
-          <p style={{ color: "red", fontSize: "2rem", fontWeight: "bold" }}>
-            Unauthorized user!!
-          </p>
-        </div>
-      )}
-    </>
+      <div className="chat-input">
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type your message..."
+          disabled={isLoading}
+        />
+        <button onClick={handleSend} disabled={!message.trim() || isLoading}>
+          {isLoading ? "Sending..." : "Send"}
+        </button>
+      </div>
+    </div>
   );
 };
 

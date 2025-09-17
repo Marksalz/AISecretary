@@ -14,7 +14,8 @@ meRouter.get("/me", (req, res) => {
 
     // Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+    console.log(token);
+    
     // You can either return what's inside the JWT or fetch user from DB
     // Assuming JWT contains { id, name, email, picture }
     res.json({ user: decoded });
