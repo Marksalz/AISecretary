@@ -2,25 +2,25 @@ import {
   normalize,
   isConfirmation,
   isCancellation,
-} from "../../utils/messageUtils.js";
+} from "../../../utils/messageUtils.js";
 import {
   confirmEvent,
   updatePendingEvent,
   getPendingEvent,
   cancelEvent,
   clearPendingEvent,
-} from "./eventHandlers/eventConfirmation.js";
+} from "../eventHandlers/eventConfirmation.js";
 import { createPendingResponse } from "./responseHandler.js";
 import {
   detectTimeUpdate,
   detectTitleUpdate,
   detectLocationUpdate,
-} from "../../ai/prompts.js";
-import { getPendingAction, clearPendingAction } from "./pendingAction.js";
-import createEvent from "./eventHandlers/eventCreate.js";
-import updateEvent from "./eventHandlers/eventUpdate.js";
-import deleteEvent from "./eventHandlers/eventDelete.js";
-import { findConflicts } from "../availability.js";
+} from "../../../ai/prompts.js";
+import { getPendingAction, clearPendingAction } from "../pendingAction.js";
+import createEvent from "../eventHandlers/eventCreate.js";
+import updateEvent from "../eventHandlers/eventUpdate.js";
+import deleteEvent from "../eventHandlers/eventDelete.js";
+import { findConflicts } from "../../availability.js";
 
 export async function handlePendingFlow(message) {
   const pendingEvent = getPendingEvent();

@@ -2,7 +2,7 @@ import {
   getEventsFromGoogleCalendar,
   updateEventInGoogleCalendar,
 } from "../../../services/eventServices.js";
-import { createChatResponse } from "../responseHandler.js";
+import { createChatResponse } from "../handlers/responseHandler.js";
 import { askGemini } from "../../../ai/gemini.js";
 
 export default async function updateEvent(

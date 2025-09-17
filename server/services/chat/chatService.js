@@ -1,26 +1,12 @@
-import {
-  normalize,
-  isConfirmation,
-  isCancellation,
-} from "../../utils/messageUtils.js";
 import { askGemini } from "../../ai/gemini.js";
-// detection helpers are now used within pendingFlowHandler
-import {
-  setPendingEvent,
-  clearPendingEvent,
-} from "./eventHandlers/eventConfirmation.js";
+import { setPendingEvent } from "./eventHandlers/eventConfirmation.js";
 import {
   createPendingResponse,
   createChatResponse,
-} from "./responseHandler.js";
-
-import updateEvent from "./eventHandlers/eventUpdate.js";
-import deleteEvent from "./eventHandlers/eventDelete.js";
+} from ".././chat/handlers/responseHandler.js";
 import readEvent from "./eventHandlers/eventRead.js";
-import createEvent from "./eventHandlers/eventCreate.js";
-import { handlePendingFlow } from "./pendingFlowHandler.js";
+import { handlePendingFlow } from "../chat/handlers/pendingFlowHandler.js";
 import { setPendingAction } from "./pendingAction.js";
-import { getEventsFromGoogleCalendar } from "../eventServices.js";
 import { isBusyAt } from "../../services/availability.js";
 
 export async function handleMessage(

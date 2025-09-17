@@ -2,7 +2,7 @@ import {
   getEventsFromGoogleCalendar,
   deleteEventFromGoogleCalendar,
 } from "../../../services/eventServices.js";
-import { createChatResponse } from "../responseHandler.js";
+import { createChatResponse } from "../handlers/responseHandler.js";
 
 export default async function deleteEvent(
   data,
