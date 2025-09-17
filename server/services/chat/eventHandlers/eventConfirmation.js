@@ -54,7 +54,6 @@ export function updatePendingEvent(updates) {
     throw new Error("No pending event to update");
   }
   pendingEvent = { ...pendingEvent, ...updates };
-  console.log(`pending event: `, pendingEvent);
 
   return pendingEvent;
 }

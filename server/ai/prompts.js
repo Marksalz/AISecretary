@@ -55,13 +55,13 @@ Respond ONLY as JSON:
 
 Examples:
 User: "Move the meeting start to 3pm today"
--> { "type": "start", "time": "2025-09-17T15:00:00Z" }
+Response: { "type": "start", "time": "2025-09-17T15:00:00Z" }
 
 User: "Make it end at 5:30 pm on Friday"
--> { "type": "end", "time": "2025-09-19T17:30:00Z" }
+Response: { "type": "end", "time": "2025-09-19T17:30:00Z" }
 
 User: "a bit earlier"
--> { "type": "start", "time": "a bit earlier" }`;
+Response: { "type": "start", "time": "a bit earlier" }`;
 }
 
 /**
@@ -94,10 +94,10 @@ Respond ONLY as JSON:
 
 Examples:
 User: "Rename the meeting to Sprint Planning"
--> { "title": "Sprint Planning" }
+Response: { "title": "Sprint Planning" }
 
 User: "Can we adjust the title?"
--> { "title": null }`;
+Response: { "title": null }`;
 }
 
 /**
@@ -130,13 +130,13 @@ Respond ONLY as JSON:
 
 Examples:
 User: "Move it to Room B, 3rd floor"
--> { "location": "Room B, 3rd floor" }
+Response: { "location": "Room B, 3rd floor" }
 
 User: "Let's do it on Zoom: https://example.zoom.us/j/123"
--> { "location": "https://example.zoom.us/j/123" }
+Response: { "location": "https://example.zoom.us/j/123" }
 
 User: "Wherever works"
--> { "location": null }`;
+Response: { "location": null }`;
 }
 
 /**
@@ -145,6 +145,7 @@ User: "Wherever works"
  */
 async function askAndParse(prompt) {
   const raw = await askGemini(prompt); // returns text for non-calendar prompts
+
   if (raw == null) return { ok: false, error: "Empty response", raw };
   let text = String(raw).trim();
   text = text

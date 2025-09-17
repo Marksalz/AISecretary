@@ -49,6 +49,7 @@ export async function handleMessage(
   let event;
   if (pendingEvent || pendingActionObj) {
     const normalizedMsg = normalize(message);
+
     if (isConfirmation(normalizedMsg)) {
       // Confirm the pending action
       if (pendingActionObj) {
@@ -110,7 +111,7 @@ export async function handleMessage(
     const titleTrigger =
       /\b(title|rename|call it|name it|let's call it|change[^\n]*title|new title)\b/i;
     const locationTrigger =
-      /\b(location|venue|room|office|move (it )?to|relocate|place|meet at|on (zoom|google meet|teams)|zoom|google meet|teams)\b|https?:\/\//i;
+      /\b(location|venue|room|office|address|place|meet at|meeting at|on (zoom|google meet|teams)|zoom|google meet|teams|change\s+(the\s+)?location\s+to|set\s+(the\s+)?location\s+to|move (it )?to|relocate)\b|https?:\/\//i;
 
     // Try time update via model
     if (timeTrigger.test(normalizedMsg)) {
@@ -157,6 +158,9 @@ export async function handleMessage(
     if (locationTrigger.test(normalizedMsg)) {
       try {
         const res = await detectLocationUpdate(message);
+
+        console.log(`res: `, res);
+
         if (res && !res.error && res.location) {
           event = updatePendingEvent({ location: res.location.trim() });
           if (pendingActionObj) pendingActionObj.data = event;
@@ -168,6 +172,7 @@ export async function handleMessage(
         // ignore and continue
       }
     }
+
     return createPendingResponse(
       `You are currently creating or modifying an event. Confirm or cancel?`
     );
