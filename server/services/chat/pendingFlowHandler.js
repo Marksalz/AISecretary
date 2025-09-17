@@ -124,7 +124,6 @@ export async function handlePendingFlow(message) {
     try {
       const res = await detectTimeUpdate(message);
 
-
       if (res && !res.error && res.time && res.type) {
         let event;
         if (res.type === "start") {
