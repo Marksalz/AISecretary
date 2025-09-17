@@ -36,10 +36,11 @@ export async function chatController(req, res) {
     res.json(response);
   } catch (error) {
     console.error("ChatController error:", error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: "Internal server error",
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 }

@@ -18,7 +18,7 @@ Your role is to understand the user's intent (add, delete, update, or read an ev
 and return only a valid JSON object.
 
 Context:
-- The current datetime is ${new Date().toISOString()}.
+- The current datetime is ${new Date().toISOString()}, the time zone is UTC+3.
 - When the user says 'today', always use this date.
 
 Rules:

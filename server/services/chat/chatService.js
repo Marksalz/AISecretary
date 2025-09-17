@@ -5,6 +5,11 @@ import {
 } from "../../utils/messageUtils.js";
 import { askGemini } from "../../ai/gemini.js";
 import {
+  detectTimeUpdate,
+  detectTitleUpdate,
+  detectLocationUpdate,
+} from "../../ai/prompts.js";
+import {
   confirmEvent,
   updatePendingEvent,
   getPendingEvent,
@@ -41,6 +46,7 @@ export async function handleMessage(
 ) {
   const pendingEvent = getPendingEvent();
   const pendingActionObj = getPendingAction();
+  let event;
   if (pendingEvent || pendingActionObj) {
     const normalizedMsg = normalize(message);
     if (isConfirmation(normalizedMsg)) {
@@ -98,19 +104,69 @@ export async function handleMessage(
       clearPendingAction();
       return cancelEvent();
     }
-    if (/location/i.test(normalizedMsg)) {
-      const location = message.replace(/.*location\s*/i, "").trim();
-      updatePendingEvent({ location });
-      return createPendingResponse(
-        `Updated location to "${location}". Confirm or cancel?`
-      );
+    // Heuristic triggers for update types
+    const timeTrigger =
+      /\b(start( time)?|begin(s|ning)?|end( time)?|finish(es|ing)?|earlier|later|at\s+\d{1,2}(:\d{2})?\s*(am|pm)?|today|tomorrow|tonight|noon|midnight|morning|afternoon|evening|night|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
+    const titleTrigger =
+      /\b(title|rename|call it|name it|let's call it|change[^\n]*title|new title)\b/i;
+    const locationTrigger =
+      /\b(location|venue|room|office|move (it )?to|relocate|place|meet at|on (zoom|google meet|teams)|zoom|google meet|teams)\b|https?:\/\//i;
+
+    // Try time update via model
+    if (timeTrigger.test(normalizedMsg)) {
+      try {
+        const res = await detectTimeUpdate(message);
+        if (res && !res.error && res.time && res.type) {
+          if (res.type === "start") {
+            event = updatePendingEvent({ start: res.time });
+            if (pendingActionObj) pendingActionObj.data = event;
+            return createPendingResponse(
+              `Updated start time to "${res.time}". Confirm or cancel?`
+            );
+          }
+          if (res.type === "end") {
+            event = updatePendingEvent({ end: res.time });
+            if (pendingActionObj) pendingActionObj.data = event;
+            return createPendingResponse(
+              `Updated end time to "${res.time}". Confirm or cancel?`
+            );
+          }
+        }
+      } catch (_) {
+        // fall through to other handlers
+      }
     }
-    if (/title/i.test(normalizedMsg)) {
-      const title = message.replace(/.*title\s*/i, "").trim();
-      updatePendingEvent({ title });
-      return createPendingResponse(
-        `Updated title to "${title}". Confirm or cancel?`
-      );
+
+    // Try title update via model
+    if (titleTrigger.test(normalizedMsg)) {
+      try {
+        const res = await detectTitleUpdate(message);
+        if (res && !res.error && res.title) {
+          event = updatePendingEvent({ title: res.title.trim() });
+          if (pendingActionObj) pendingActionObj.data = event;
+          return createPendingResponse(
+            `Updated title to "${res.title}". Confirm or cancel?`
+          );
+        }
+      } catch (_) {
+        // ignore and continue
+      }
+    }
+
+    // Try location update via model
+    if (locationTrigger.test(normalizedMsg)) {
+      try {
+        const res = await detectLocationUpdate(message);
+        if (res && !res.error && res.location) {
+          event = updatePendingEvent({ location: res.location.trim() });
+          if (pendingActionObj) pendingActionObj.data = event;
+          return createPendingResponse(
+            `Updated location to "${res.location}". Confirm or cancel?`
+          );
+        }
+      } catch (_) {
+        // ignore and continue
+      }
     }
     return createPendingResponse(
       `You are currently creating or modifying an event. Confirm or cancel?`

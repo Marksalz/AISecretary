@@ -42,7 +42,7 @@ export function cancelEvent() {
     success: true,
     data: {
       type: "calendar_event_cancelled",
-      message: "❌ Event creation cancelled.",
+      message: "❌ Calendar event cancelled.",
       event,
     },
   };
@@ -54,5 +54,7 @@ export function updatePendingEvent(updates) {
     throw new Error("No pending event to update");
   }
   pendingEvent = { ...pendingEvent, ...updates };
+  console.log(`pending event: `, pendingEvent);
+
   return pendingEvent;
 }
