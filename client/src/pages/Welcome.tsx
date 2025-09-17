@@ -1,24 +1,32 @@
+import "../styles/Welcome.css";
+import LogoAnimate from "../components/LogoAnimate.jsx"
+
+
+
 export default function Welcome() {
-   
-
   return (
-    <div style={{ textAlign: "center", marginTop: "4rem" }}>
-      <h1>Welcome to AI Secretary!</h1>
+    <div className="welcome-wrapper">
+      <div className="welcome-card">
 
-      <button
-        onClick={() => window.location.href = "http://localhost:3000/auth/google"}
-        style={{ padding: "10px 20px", fontSize: "16px", margin: "20px" }}
-      >
-        Login with Google
-      </button>
+        <h1>Welcome in</h1>
+       <LogoAnimate/> 
 
-      <br />
+        <button
+          className="welcome-button"
+          onClick={() =>
+            (window.location.href = "http://localhost:3000/auth/google")
+          }
+        >
+          Login with Google
+        </button>
 
-      <img
-        src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png"
-        alt="Google Logo"
-        width={120}
-      />
-    </div>
-  );
+        <img
+          className="welcome-logo"
+          src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png"
+          alt="Google Logo"
+        />
+        <div />
+      </div>
+    </div>  );
+
 }
