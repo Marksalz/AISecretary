@@ -41,18 +41,50 @@ export default async function updateEvent(
     }
 
     // Ask Gemini which fields to update, providing the full event and user message
-    const updatePrompt = `You are updating a calendar event. Here is the current event as JSON:\n${JSON.stringify(
-      {
-        title: eventToUpdate.summary,
-        start: eventToUpdate.start?.dateTime || eventToUpdate.start?.date,
-        end: eventToUpdate.end?.dateTime || eventToUpdate.end?.date,
-        location: eventToUpdate.location || null,
-        description: eventToUpdate.description || null,
-      },
-      null,
-      2
-    )}\n\nUser wants to update: "${message}"\n\nReturn a JSON object with only the fields that should be changed and their new values. If a field should not be changed, do not include it in the object. Example: { "title": "New Title", "start": "..." }`;
-    const geminiUpdate = await askGemini(updatePrompt);
+    const updatePrompt = `You are updating a calendar event.
+Here is the current event as JSON:
+${JSON.stringify(
+  {
+    title: eventToUpdate.summary,
+    start: eventToUpdate.start?.dateTime || eventToUpdate.start?.date,
+    end: eventToUpdate.end?.dateTime || eventToUpdate.end?.date,
+    location: eventToUpdate.location || null,
+    description: eventToUpdate.description || null,
+  },
+  null,
+  2
+)}
+
+User wants to update: "${message}"
+
+Rules:
+- Output ONLY a JSON object, no extra text or code fences.
+- Include only the fields that should change among: "title", "start", "end", "location", "description".
+- For any dates/times, return ISO 8601 with the system's local timezone offset (e.g., 2025-09-18T09:00:00+03:00).
+- If the user mentions a time without specifying start/end, assume it is the start time unless the end time is clearly indicated.
+
+Examples:
+{ "start": "2025-09-18T09:00:00+03:00" }
+{ "title": "Sprint Planning" }
+{ "location": "Room B, 3rd floor" }`;
+
+    let geminiUpdate = await askGemini(updatePrompt);
+    // If the model returned text, try to parse JSON out of it
+    if (typeof geminiUpdate === "string") {
+      let text = geminiUpdate
+        .trim()
+        .replace(/^```json/i, "")
+        .replace(/^```/, "")
+        .replace(/```$/, "")
+        .trim();
+      try {
+        geminiUpdate = JSON.parse(text);
+      } catch (e) {
+        return createChatResponse(
+          "Sorry, I couldn't determine which fields to update. Please specify the changes."
+        );
+      }
+    }
     if (
       !geminiUpdate ||
       typeof geminiUpdate !== "object" ||

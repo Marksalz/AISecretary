@@ -4,16 +4,8 @@ import {
   isCancellation,
 } from "../../utils/messageUtils.js";
 import { askGemini } from "../../ai/gemini.js";
+// detection helpers are now used within pendingFlowHandler
 import {
-  detectTimeUpdate,
-  detectTitleUpdate,
-  detectLocationUpdate,
-} from "../../ai/prompts.js";
-import {
-  confirmEvent,
-  updatePendingEvent,
-  getPendingEvent,
-  cancelEvent,
   setPendingEvent,
   clearPendingEvent,
 } from "./eventHandlers/eventConfirmation.js";
@@ -26,157 +18,19 @@ import updateEvent from "./eventHandlers/eventUpdate.js";
 import deleteEvent from "./eventHandlers/eventDelete.js";
 import readEvent from "./eventHandlers/eventRead.js";
 import createEvent from "./eventHandlers/eventCreate.js";
-
-// Store pending action type (add, update, delete) and data
-let pendingAction = null;
-function setPendingAction(action) {
-  pendingAction = action;
-}
-function getPendingAction() {
-  return pendingAction;
-}
-function clearPendingAction() {
-  pendingAction = null;
-}
+import { handlePendingFlow } from "./pendingFlowHandler.js";
+import { setPendingAction } from "./pendingAction.js";
+import { getEventsFromGoogleCalendar } from "../eventServices.js";
+import { isBusyAt } from "../../services/availability.js";
 
 export async function handleMessage(
   message,
   conversationHistory = [],
   user = {}
 ) {
-  const pendingEvent = getPendingEvent();
-  const pendingActionObj = getPendingAction();
-  let event;
-  if (pendingEvent || pendingActionObj) {
-    const normalizedMsg = normalize(message);
-
-    if (isConfirmation(normalizedMsg)) {
-      // Confirm the pending action
-      if (pendingActionObj) {
-        const {
-          type,
-          data,
-          user: actionUser,
-          keyword,
-          updateDetails,
-          eventId,
-        } = pendingActionObj;
-        clearPendingAction();
-        if (type === "add") {
-          // Confirm create
-          const created = await createEvent(
-            data,
-            actionUser.googleAccessToken,
-            actionUser.googleRefreshToken
-          );
-          clearPendingEvent();
-          return created;
-        } else if (type === "update") {
-          // Confirm update
-          // Actually perform the update now
-          const updated = await updateEvent(
-            data,
-            actionUser.googleAccessToken,
-            actionUser.googleRefreshToken,
-            updateDetails.message,
-            keyword
-          );
-          clearPendingEvent();
-          return updated;
-        } else if (type === "delete") {
-          // Confirm delete
-          // Actually perform the delete now
-          const deleted = await deleteEvent(
-            data,
-            actionUser.googleAccessToken,
-            actionUser.googleRefreshToken,
-            keyword
-          );
-          clearPendingEvent();
-          return deleted;
-        }
-      } else {
-        // Fallback to event confirmation
-        const res = await confirmEvent(user);
-        return res;
-      }
-    }
-    if (isCancellation(normalizedMsg)) {
-      clearPendingAction();
-      return cancelEvent();
-    }
-    // Heuristic triggers for update types
-    const timeTrigger =
-      /\b(start( time)?|begin(s|ning)?|end( time)?|finish(es|ing)?|earlier|later|at\s+\d{1,2}(:\d{2})?\s*(am|pm)?|today|tomorrow|tonight|noon|midnight|morning|afternoon|evening|night|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
-    const titleTrigger =
-      /\b(title|rename|call it|name it|let's call it|change[^\n]*title|new title)\b/i;
-    const locationTrigger =
-      /\b(location|venue|room|office|address|place|meet at|meeting at|on (zoom|google meet|teams)|zoom|google meet|teams|change\s+(the\s+)?location\s+to|set\s+(the\s+)?location\s+to|move (it )?to|relocate)\b|https?:\/\//i;
-
-    // Try time update via model
-    if (timeTrigger.test(normalizedMsg)) {
-      try {
-        const res = await detectTimeUpdate(message);
-        if (res && !res.error && res.time && res.type) {
-          if (res.type === "start") {
-            event = updatePendingEvent({ start: res.time });
-            if (pendingActionObj) pendingActionObj.data = event;
-            return createPendingResponse(
-              `Updated start time to "${res.time}". Confirm or cancel?`
-            );
-          }
-          if (res.type === "end") {
-            event = updatePendingEvent({ end: res.time });
-            if (pendingActionObj) pendingActionObj.data = event;
-            return createPendingResponse(
-              `Updated end time to "${res.time}". Confirm or cancel?`
-            );
-          }
-        }
-      } catch (_) {
-        // fall through to other handlers
-      }
-    }
-
-    // Try title update via model
-    if (titleTrigger.test(normalizedMsg)) {
-      try {
-        const res = await detectTitleUpdate(message);
-        if (res && !res.error && res.title) {
-          event = updatePendingEvent({ title: res.title.trim() });
-          if (pendingActionObj) pendingActionObj.data = event;
-          return createPendingResponse(
-            `Updated title to "${res.title}". Confirm or cancel?`
-          );
-        }
-      } catch (_) {
-        // ignore and continue
-      }
-    }
-
-    // Try location update via model
-    if (locationTrigger.test(normalizedMsg)) {
-      try {
-        const res = await detectLocationUpdate(message);
-
-        console.log(`res: `, res);
-
-        if (res && !res.error && res.location) {
-          event = updatePendingEvent({ location: res.location.trim() });
-          if (pendingActionObj) pendingActionObj.data = event;
-          return createPendingResponse(
-            `Updated location to "${res.location}". Confirm or cancel?`
-          );
-        }
-      } catch (_) {
-        // ignore and continue
-      }
-    }
-
-    return createPendingResponse(
-      `You are currently creating or modifying an event. Confirm or cancel?`
-    );
-  }
+  // Delegate pending flow handling to a dedicated module
+  const pendingHandled = await handlePendingFlow(message);
+  if (pendingHandled) return pendingHandled;
 
   // Use Gemini to extract intent and data
   let aiResponse;
@@ -205,7 +59,69 @@ export async function handleMessage(
       }`
     );
   } else if (type === "read") {
-    // Read events in the given time range
+    // Availability questions like "Am I available tomorrow at 3pm?"
+    const availabilityCue = /\b(available|free|busy)\b/i.test(message);
+    const hasMoment = data?.timeMin && data?.timeMax;
+    let momentLike = false;
+    if (hasMoment) {
+      const tMin = new Date(data.timeMin).getTime();
+      const tMax = new Date(data.timeMax).getTime();
+      if (!Number.isNaN(tMin) && !Number.isNaN(tMax)) {
+        momentLike = Math.abs(tMax - tMin) <= 5 * 60 * 1000; // <= 5 minutes window
+      }
+    }
+
+    if (availabilityCue && momentLike) {
+      try {
+        const instantIso = data.timeMin || data.timeMax;
+        const conflict = await isBusyAt(
+          user.googleAccessToken,
+          user.googleRefreshToken,
+          instantIso
+        );
+
+        const fmtTime = (d) =>
+          new Date(d).toLocaleTimeString(undefined, {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+        const instant = new Date(instantIso);
+        if (conflict) {
+          let s, e;
+          if (conflict.start?.dateTime) s = new Date(conflict.start.dateTime);
+          else if (conflict.start?.date)
+            s = new Date(`${conflict.start.date}T00:00:00`);
+          if (conflict.end?.dateTime) e = new Date(conflict.end.dateTime);
+          else if (conflict.end?.date)
+            e = new Date(`${conflict.end.date}T00:00:00`);
+          const title = conflict.summary || "(no title)";
+          return {
+            success: true,
+            data: {
+              type: "calendar_availability",
+              message: `You are busy at ${fmtTime(
+                instant
+              )}: "${title}" ${fmtTime(s)} - ${fmtTime(e)}`,
+              events: [conflict],
+            },
+          };
+        } else {
+          return {
+            success: true,
+            data: {
+              type: "calendar_availability",
+              message: `You are available at ${fmtTime(instant)}.`,
+              events: [],
+            },
+          };
+        }
+      } catch (err) {
+        // Fallback to standard read if availability check fails
+      }
+    }
+
+    // Default: read events in the given time range
     return await readEvent(
       user.googleAccessToken,
       user.googleRefreshToken,
