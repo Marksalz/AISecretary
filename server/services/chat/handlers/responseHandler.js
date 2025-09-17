@@ -1,4 +1,4 @@
-import { getPendingEvent } from "./eventHandlers/eventCreation.js";
+import { getPendingEvent } from "../eventHandlers/eventConfirmation.js";
 
 export function createPendingResponse(message) {
   const pendingEvent = getPendingEvent();
