@@ -17,24 +17,38 @@ export default async function createEvent(
         data.end
       );
       if (conflicts.length > 0) {
-        const first = conflicts[0];
-        let s, e;
-        if (first.start?.dateTime) s = new Date(first.start.dateTime);
-        else if (first.start?.date)
-          s = new Date(`${first.start.date}T00:00:00`);
-        if (first.end?.dateTime) e = new Date(first.end.dateTime);
-        else if (first.end?.date) e = new Date(`${first.end.date}T00:00:00`);
-        const fmt = (d) =>
-          new Date(d).toLocaleTimeString(undefined, {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        const title = first.summary || "(no title)";
-        return createChatResponse(
-          `That time overlaps with an existing event: "${title}" ${fmt(
-            s
-          )} - ${fmt(e)}. Please choose another time.`
-        );
+        // Find the event with the closest overlap to the new event's start time
+        const newStart = new Date(data.start);
+        let best = null;
+        let minDiff = Infinity;
+        for (const ev of conflicts) {
+          let s, e;
+          if (ev.start?.dateTime) s = new Date(ev.start.dateTime);
+          else if (ev.start?.date) s = new Date(`${ev.start.date}T00:00:00`);
+          if (ev.end?.dateTime) e = new Date(ev.end.dateTime);
+          else if (ev.end?.date) e = new Date(`${ev.end.date}T00:00:00`);
+          // Only consider events that actually overlap
+          if (s && e && newStart < e && new Date(data.end) > s) {
+            const diff = Math.abs(newStart - s);
+            if (diff < minDiff) {
+              minDiff = diff;
+              best = { ev, s, e };
+            }
+          }
+        }
+        if (best) {
+          const fmt = (d) =>
+            new Date(d).toLocaleTimeString(undefined, {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          const title = best.ev.summary || "(no title)";
+          return createChatResponse(
+            `That time overlaps with an existing event: "${title}" ${fmt(
+              best.s
+            )} - ${fmt(best.e)}. Please choose another time.`
+          );
+        }
       }
     }
     const created = await addEventToGoogleCalendar(

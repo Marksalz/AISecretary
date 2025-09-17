@@ -123,10 +123,26 @@ export async function handlePendingFlow(message) {
   if (timeTrigger.test(normalizedMsg)) {
     try {
       const res = await detectTimeUpdate(message);
+
+
       if (res && !res.error && res.time && res.type) {
         let event;
-        if (res.type === "start")
-          event = updatePendingEvent({ start: res.time });
+        if (res.type === "start") {
+          // If both start and end exist, preserve duration
+          const pending = getPendingEvent();
+          let updates = { start: res.time };
+          if (pending && pending.start && pending.end) {
+            const oldStart = new Date(pending.start);
+            const oldEnd = new Date(pending.end);
+            const durationMs = oldEnd - oldStart;
+            if (!isNaN(durationMs) && durationMs > 0) {
+              const newStart = new Date(res.time);
+              const newEnd = new Date(newStart.getTime() + durationMs);
+              updates.end = newEnd.toISOString();
+            }
+          }
+          event = updatePendingEvent(updates);
+        }
         if (res.type === "end") event = updatePendingEvent({ end: res.time });
         if (event) {
           if (pendingActionObj) pendingActionObj.data = event;

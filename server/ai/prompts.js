@@ -23,9 +23,18 @@ function temporalContext() {
  * Build a prompt to extract a time update from a user message.
  * Contract:
  * - Input: user message string
- * - Output (JSON-only): { "type": "start" | "end", "time": string }
- *   - "time": ISO 8601 in UTC (e.g., 2025-09-17T15:00:00Z) when determinable;
- *     otherwise a short natural-language guess (e.g., "later in the afternoon").
+ * - Output (JSON-only), with one of the following shapes:
+ *   1) Explicit range provided by user:
+ *      { "type": "range", "start": string, "end": string }
+ *   2) Start (or end) boundary with a specific time:
+ *      { "type": "start" | "end", "time": string }
+ *   3) Start boundary with duration:
+ *      { "type": "start", "time": string, "durationMinutes": number }
+ *
+ *   - All date-times MUST be ISO 8601 with the system's local timezone offset (e.g., +03:00),
+ *     not UTC 'Z'.
+ *   - If the time cannot be resolved, "time" may be a short natural-language guess
+ *     (e.g., "later in the afternoon").
  */
 export function buildTimeUpdatePrompt(message) {
   const { nowIso, tzNote } = temporalContext();
@@ -43,25 +52,43 @@ Context:
 
 Rules:
 - Output only JSON, no extra text or code fences.
+- Return ISO 8601 with the system's LOCAL timezone offset (e.g., 2025-09-18T16:30:00+03:00),
+  NOT UTC 'Z'.
+- If the user gives an explicit range (e.g., "from 6pm till 7pm" or "between 09:00 and 10:30"),
+  set type = "range" and include both "start" and "end".
+- If the user specifies a single time and a duration (e.g., "at 4:30pm for one hour"),
+  set type = "start", include "time" and "durationMinutes" as a number (e.g., 60).
 - If the user refers to the ending boundary ("end", "finish", "until"), type = "end";
-	otherwise if they refer to the starting boundary ("start", "begin", "from"), type = "start".
+  otherwise if they refer to the starting boundary ("start", "begin", "from"), type = "start".
 - If ambiguous, prefer "start" unless "end" is clearly indicated.
-- When a precise time can be resolved, return ISO 8601 in UTC with a trailing 'Z'.
+- When a precise time can be resolved, always return ISO with local offset.
 
 Message: "${message}"
 
-Respond ONLY as JSON:
-{ "type": "start|end", "time": "<ISO-8601-or-natural-text>" }
+Respond ONLY as JSON. Use one of these formats:
+{ "type": "range", "start": "<ISO-8601-with-local-offset>", "end": "<ISO-8601-with-local-offset>" }
+{ "type": "start", "time": "<ISO-8601-with-local-offset>", "durationMinutes": <number>|null }
+{ "type": "end", "time": "<ISO-8601-with-local-offset>" }
 
 Examples:
 User: "Move the meeting start to 3pm today"
-Response: { "type": "start", "time": "2025-09-17T15:00:00Z" }
+Response: { "type": "start", "time": "2025-09-17T15:00:00+03:00", "durationMinutes": null }
 
 User: "Make it end at 5:30 pm on Friday"
-Response: { "type": "end", "time": "2025-09-19T17:30:00Z" }
+Response: { "type": "end", "time": "2025-09-19T17:30:00+03:00" }
 
 User: "a bit earlier"
-Response: { "type": "start", "time": "a bit earlier" }`;
+Response: { "type": "start", "time": "a bit earlier", "durationMinutes": null }
+
+User: "change meeting time to be from 6pm till 7pm"
+Response: {
+  "type": "range",
+  "start": "2025-09-17T18:00:00+03:00",
+  "end": "2025-09-17T19:00:00+03:00"
+}
+
+User: "make it at 4:30pm for one hour"
+Response: { "type": "start", "time": "2025-09-17T16:30:00+03:00", "durationMinutes": 60 }`;
 }
 
 /**
@@ -169,7 +196,10 @@ async function askAndParse(prompt) {
 export async function detectTimeUpdate(message) {
   const prompt = buildTimeUpdatePrompt(message);
   const res = await askAndParse(prompt);
+
   if (!res.ok) return { error: res.error };
+  // res.data can be one of:
+  // { type: 'range', start, end } | { type: 'start', time, durationMinutes? } | { type: 'end', time }
   return res.data;
 }
 

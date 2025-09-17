@@ -62,6 +62,15 @@ export async function findConflicts(
   return events.filter((ev) => {
     const { s, e } = toRange(ev);
     if (!s || !e) return false;
+    // Debug logging for overlap diagnosis
+    console.log("[findConflicts] Checking overlap:", {
+      newEvent: { start: start.toISOString(), end: end.toISOString() },
+      existingEvent: {
+        s: s.toISOString(),
+        e: e.toISOString(),
+        summary: ev.summary,
+      },
+    });
     return eventsOverlap(start, end, s, e);
   });
 }
