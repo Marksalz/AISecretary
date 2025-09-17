@@ -1,4 +1,4 @@
-import { handleMessage } from "../services/chatServices.js";
+import { handleMessage } from "../services/chat/chatService.js";
 
 export async function chatController(req, res) {
   try {
@@ -24,14 +24,22 @@ export async function chatController(req, res) {
       req.user
     );
 
-    req.user.conversationHistory.push({
+    const newMessage = {
       userMessage: message,
+      botResponse: response.data,
+      timestamp: new Date().toISOString(),
       requiresMoreInfo: response.requiresMoreInfo || false,
-    });
+    };
+
+    req.user.conversationHistory.push(newMessage);
 
     res.json(response);
   } catch (error) {
     console.error("ChatController error:", error);
-    res.status(500).json({ success: false, error: "Internal server error" });
+    res.status(500).json({ 
+      success: false, 
+      error: "Internal server error",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 }
