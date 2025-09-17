@@ -1,0 +1,70 @@
+.rouetitle{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+
+}
+
+.divroue {
+    width: 3rem;
+    height: auto;
+    position: relative;
+}
+
+.roue {
+  margin:0;
+  height: 2.5rem;
+  width: 2.5rem;
+  object-fit: contain;
+}
+
+/* Roue bleue : au-dessus, tourne vers la droite */
+.blue {
+  margin-bottom: -0.7rem;
+    margin-left: 1.2rem;
+  animation: spin-right 7s linear infinite;
+  z-index: 2; /* passe au-dessus */
+}
+
+/* Roue jaune : en dessous, tourne vers la gauche */
+.yellow {
+  bottom: 0;
+  left: 0;
+  animation: spin-left 7s linear infinite;
+  z-index: 1;
+}   
+
+/* Rotation droite */
+@keyframes spin-right {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Rotation gauche */
+@keyframes spin-left {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}   
+
+
+
+.ai-secretary {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.ai {
+  color: rgb(23, 0, 173); /* bleu que tu as donné */
+}
+
+.secretary {
+  color: rgb(255, 229, 0); /* jaune que tu as donné */
+}

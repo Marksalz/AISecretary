@@ -1,0 +1,88 @@
+/* Centre la carte dans la page */
+.welcome-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f7fa; /* fond léger */
+}
+
+/* Carte principale */
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  position: relative; /* utile si tu veux placer les roues en absolu */
+
+
+}
+.secwelcome{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+
+
+.welcome-text {
+  display: flex;
+  flex-direction: column; /* Welcome in au-dessus de AI Secretary */
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.welcome-in {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #333; /* ou une couleur neutre */
+}
+
+.ai-secretary {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.ai {
+  color: rgb(23, 0, 173); /* bleu que tu as donné */
+}
+
+.secretary {
+  color: rgb(255, 229, 0); /* jaune que tu as donné */
+}
+
+
+/* Bouton Google */ 
+.welcome-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  margin: 1.5rem 0;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.welcome-button:hover {
+  background-color: #3367d6;
+  transform: translateY(-2px);
+}
+
+.welcome-button:active {
+  transform: translateY(0);
+}
+
+/* Logo Google */
+.welcome-logo {
+  width: 120px;
+  margin-top: 1rem;
+}
