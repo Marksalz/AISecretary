@@ -6,7 +6,6 @@ import {
   DirectionsRenderer,
 } from "@react-google-maps/api";
 import "../styles/ItineraryMap.css";
-import { GOOGLE_MAPS_API_KEY } from "../../config.env";
 
 interface RouteInfo {
   duration: string;
@@ -41,7 +40,7 @@ const ItineraryMap: React.FC<ItineraryMapProps> = ({
   // Load Google Maps API
   const { isLoaded: isScriptLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
     version: "weekly",
     preventGoogleFontsLoading: true,
