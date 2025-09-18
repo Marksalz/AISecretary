@@ -1,16 +1,17 @@
 /* Container global */
 .main-container {
   display: flex;
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 20px auto;
   gap: 30px;
   padding: 0 20px;
   min-height: calc(100vh - 40px);
-  align-items: flex-start;
+  align-items: stretch;
 }
 
+/* Conteneur principal du chat */
 .chat-container {
-  flex: 2;
+  flex: 3;
   border: 1px solid #e1e8ed;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -18,15 +19,130 @@
   display: flex;
   flex-direction: column;
   background-color: #fff;
+  min-width: 0; /* Permet au conteneur de rétrécir si nécessaire */
   overflow: hidden;
   height: 90vh;
   transition: all 0.3s ease;
 }
 
+/* Sidebar containers */
+.calendar-sidebar,
+.map-sidebar {
+  flex: 1;
+  min-width: 300px;
+  max-width: 380px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  height: 90vh;
+  position: sticky;
+  top: 20px;
+  overflow-y: auto;
+  border: 1px solid #e1e8ed;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Map sidebar specific styles */
+.map-sidebar {
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.map-sidebar h3 {
+  padding: 20px 20px 10px;
+  margin: 0;
+  font-size: 1.1rem;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+}
+
+.event-details {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.event-details h4 {
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2c3e50;
+}
+
+.event-details p {
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.map-container {
+  flex: 1;
+  min-height: 300px;
+  position: relative;
+  background-color: #f9f9f9;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-error {
+  padding: 15px 20px;
+  background-color: #fdecea;
+  color: #d32f2f;
+  border-radius: 6px;
+  margin: 10px 15px;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.map-error p {
+  margin: 5px 0;
+}
+
+.no-event {
+  padding: 40px 20px;
+  text-align: center;
+  color: #7f8c8d;
+  background-color: #f9f9f9;
+  border-radius: 0 0 12px 12px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-loading {
+  padding: 20px;
+  text-align: center;
+  color: #5f6368;
+}
+
+.map-loading p {
+  margin: 5px 0;
+  font-size: 0.9em;
+}
+
+/* Animation de chargement */
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.loading-text {
+  animation: pulse 1.5s infinite;
+}
+
 /* Calendar container */
 .calendar-sidebar {
-  flex: 1;
-  max-width: 380px;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
