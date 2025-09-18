@@ -1,15 +1,28 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
+import type { ReactNode } from "react";
 
-const AuthContext = createContext();
+interface AuthContextType {
+  user: any;
+  login: (userData: any) => void;
+  logout: () => void;
+}
 
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }) => {
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // Pour savoir si l’auto-login est terminé
 
-  const login = (userData) => {
+  const login = (userData: any) => {
     setIsLoggedIn(true);
     setUser(userData);
   };
@@ -23,17 +36,17 @@ export const AuthProvider = ({ children }) => {
   // Auto-login au démarrage (ici on peut garder useEffect uniquement dans le provider)
   useEffect(() => {
     fetch("http://localhost:3000/user/me", {
-      credentials: "include"
+      credentials: "include",
     })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.user) {
           const firstName = data.user.name.split(" ")[0];
           login({
             id: data.user.id,
             name: firstName,
             email: data.user.email,
-            picture: data.user.picture
+            picture: data.user.picture,
           });
         } else {
           logout();
@@ -47,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
-    loading
+    loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -6,7 +6,7 @@ import InputChat from "./pages/InputChat";
 import Layout from "../Layout-app/Layout.js";
 import Welcome from "./pages/Welcome.js";
 import { AuthProvider } from "./Context/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute"; // Importer le guard
+import ProtectedRoute from "./components/ProtectedRoute.jsx"; // Importer le guard
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -15,15 +15,13 @@ createRoot(document.getElementById("root")!).render(
         <Routes>
           {/* Layout général */}
           <Route element={<Layout />}>
-            
             {/* Page publique */}
             <Route path="/" element={<Welcome />} />
-            
+
             {/* Page protégée */}
             <Route element={<ProtectedRoute />}>
               <Route path="/chat" element={<InputChat />} />
             </Route>
-
           </Route>
         </Routes>
       </AuthProvider>
