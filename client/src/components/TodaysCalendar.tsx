@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import '../styles/TodaysCalendar.css';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import "../styles/TodaysCalendar.css";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 interface CalendarEvent {
   id?: string;
@@ -22,19 +22,22 @@ const TodaysCalendar = () => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const response = await axios.get(`http://localhost:3000/calendar/date/${dateStr}`, {
-          withCredentials: true
-        });
-        
+        const dateStr = currentDate.toISOString().split("T")[0];
+        const response = await axios.get(
+          `https://aisecretary-kchy.onrender.com/calendar/date/${dateStr}`,
+          {
+            withCredentials: true,
+          }
+        );
+
         if (response.data.success) {
           setEvents(response.data.data || []);
         } else {
-          setError(response.data.error || 'Failed to load events');
+          setError(response.data.error || "Failed to load events");
         }
       } catch (err) {
-        console.error('Error fetching events:', err);
-        setError('Failed to connect to the server');
+        console.error("Error fetching events:", err);
+        setError("Failed to connect to the server");
       } finally {
         setLoading(false);
       }
@@ -54,30 +57,30 @@ const TodaysCalendar = () => {
   };
 
   const formatTime = (dateString: string): string => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
   const getDayName = (date: Date | string, short: boolean = false): string => {
     const dateObj = date instanceof Date ? date : new Date(date || new Date());
-    const options: Intl.DateTimeFormatOptions = short 
-      ? { 
-          weekday: 'short' as const, 
-          month: 'short' as const, 
-          day: 'numeric' as const 
+    const options: Intl.DateTimeFormatOptions = short
+      ? {
+          weekday: "short" as const,
+          month: "short" as const,
+          day: "numeric" as const,
         }
-      : { 
-          weekday: 'long' as const,
-          month: 'long' as const,
-          day: 'numeric' as const,
-          year: 'numeric' as const
+      : {
+          weekday: "long" as const,
+          month: "long" as const,
+          day: "numeric" as const,
+          year: "numeric" as const,
         };
-    return dateObj.toLocaleDateString('en-US', options);
+    return dateObj.toLocaleDateString("en-US", options);
   };
 
   if (loading) {
@@ -95,23 +98,23 @@ const TodaysCalendar = () => {
       <div className="calendar-header">
         <h3>{isToday ? "Today's" : getDayName(currentDate)} Schedule</h3>
         <div className="date-navigation">
-          <button 
-            className="nav-arrow" 
+          <button
+            className="nav-arrow"
             onClick={() => changeDate(-1)}
             aria-label="Previous day"
           >
             <FiChevronLeft size={20} />
           </button>
-          
-          <button 
-            className={`today-button ${isToday ? 'active' : ''}`}
+
+          <button
+            className={`today-button ${isToday ? "active" : ""}`}
             onClick={resetToToday}
           >
-            {isToday ? 'Today' : getDayName(currentDate, true)}
+            {isToday ? "Today" : getDayName(currentDate, true)}
           </button>
-          
-          <button 
-            className="nav-arrow" 
+
+          <button
+            className="nav-arrow"
             onClick={() => changeDate(1)}
             aria-label="Next day"
           >
@@ -119,7 +122,7 @@ const TodaysCalendar = () => {
           </button>
         </div>
       </div>
-      
+
       <div className="events-list">
         {events.length > 0 ? (
           events.map((event, index) => (

@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Auto-login au démarrage (ici on peut garder useEffect uniquement dans le provider)
   useEffect(() => {
-    fetch("http://localhost:3000/user/me", {
+    fetch("https://aisecretary-kchy.onrender.com/user/me", {
       credentials: "include",
     })
       .then((res) => res.json())
