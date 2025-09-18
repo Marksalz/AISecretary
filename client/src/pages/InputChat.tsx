@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import "../styles/InputChat.css";
+import TodaysCalendar from "../components/TodaysCalendar.tsx";
 
 interface Message {
   sender: "user" | "bot";
@@ -13,8 +14,15 @@ const InputChat = () => {
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-   
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  // 🔹 Focus automatique sur le champ de saisie au chargement
+  useEffect(() => {
+    if (!isLoading) {
+      inputRef.current?.focus();
+    }
+  }, [isLoading]);
+  
   // 🔹 Scroll automatique en bas du chat
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -40,6 +48,8 @@ const InputChat = () => {
     setChatHistory((prev) => [...prev, userMessage]);
     setMessage("");
     setIsLoading(true);
+    
+   
 
     try {
       const response = await fetch("http://localhost:3000/chat", {
@@ -115,10 +125,14 @@ const InputChat = () => {
   };
 
   return (
-    <div className="chat-container">
-      <h2>Assistant AI</h2>
-
-      <div className="chat-history">
+    <div className="main-container">
+      <div className="calendar-sidebar">
+        <TodaysCalendar />
+      </div>
+      
+      <div className="chat-container">
+        <h2>AI Assistant</h2>
+        <div className="chat-history">
         {chatHistory.map((msg, index) => (
           <div key={index} className={`message ${msg.sender}`}>
             <strong>{msg.sender === "user" ? "You" : "Assistant"}:</strong>
@@ -138,18 +152,21 @@ const InputChat = () => {
         <div ref={bottomRef} />
       </div>
 
-      <div className="chat-input">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message..."
-          disabled={isLoading}
-        />
-        <button onClick={handleSend} disabled={!message.trim() || isLoading}>
-          {isLoading ? "Sending..." : "Send"}
-        </button>
+        <div className="chat-input">
+          <input
+            ref={inputRef}
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your message..."
+            disabled={isLoading}
+            autoFocus
+          />
+          <button onClick={handleSend} disabled={!message.trim() || isLoading}>
+            {isLoading ? "Sending..." : "Send"}
+          </button>
+        </div>
       </div>
     </div>
   );
