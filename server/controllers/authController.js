@@ -61,6 +61,9 @@ export const authController = {
     // Send back your own JWT (cookie-based)
     res.cookie("token", jwtToken, {
       httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      path: "/",
     });
     res.redirect("https://myaisecretary.netlify.app/chat");
     //res.redirect("http://localhost:5173/chat");
