@@ -323,32 +323,30 @@ const InputChat = () => {
                 </p>
               )}
             </div>
-            <div className="map-container">
-              {userLocation && nextEvent.address ? (
-                <>
+            <div className="map-wrapper">
+              <div className="map-container">
+                {userLocation && nextEvent.address ? (
                   <ItineraryMap 
                     origin={`${userLocation.lat},${userLocation.lng}`}
                     destination={nextEvent.address}
                     onRouteInfoChange={setRouteInfo}
                   />
-                  {routeInfo && (
-                    <div className="route-info">
-                      <div className="route-info-item">
-                        <FiClock />
-                        <span>{routeInfo.duration}</span>
-                      </div>
-                      <div className="route-info-item">
-                        <FiMapPin />
-                        <span>{routeInfo.distance}</span>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="map-loading">
-                  <p>Chargement de la carte...</p>
-                  {!userLocation && <p>Localisation en cours...</p>}
-                  {!nextEvent.address && <p>En attente des détails du prochain rendez-vous...</p>}
+                ) : (
+                  <div className="no-route-message">
+                    {!userLocation ? 'Position actuelle inconnue' : 'Aucune destination spécifiée'}
+                  </div>
+                )}
+              </div>
+              {routeInfo && (
+                <div className="route-info">
+                  <div className="route-info-item">
+                    <FiClock />
+                    <span>{routeInfo.duration}</span>
+                  </div>
+                  <div className="route-info-item">
+                    <FiMapPin />
+                    <span>{routeInfo.distance}</span>
+                  </div>
                 </div>
               )}
             </div>

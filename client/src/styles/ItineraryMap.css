@@ -1,4 +1,5 @@
-/* Conteneur principal de la carte */
+/* Conteneurs de carte */
+.itinerary-map-container,
 .map-container {
   width: 100%;
   height: 100%;
